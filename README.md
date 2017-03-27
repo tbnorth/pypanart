@@ -18,9 +18,9 @@ So for example DoIt will ensure that the figures are up to date, and you
 just insert them with standard pandoc [markdown](http://daringfireball.net)
 formatting:
 
-    ![Caption goes here](./imgs/some/image.{{FMT}}){#fig_label}
+    ![Caption goes here](./imgs/some/image.{{X.fmt}}){#fig_label}
 
-Well almost standard, `{{FMT}}` is handled by PyPanArt to insert .png
+Well almost standard, `{{X.fmt}}` is handled by PyPanArt to insert .png
 in HTML outputs and .pdf in .pdf outputs, if available.  If you only have
 one format, you'd use `image.png` for example explicitly.
 
