@@ -1,6 +1,8 @@
 import os
 import json
+import shutil
 import time
+from glob import glob
 from subprocess import Popen, PIPE
 
 from defaultdotdict import DefaultDotDict
@@ -12,153 +14,249 @@ JINJA_COMMON = dict(
     undefined=jinja2.StrictUndefined,
 )
 
-def get_context_objects(state_file):
-    """Return (DefaultDotDict,DefaultDotDict), being a persistent (JSON
-    backed) and a runtime only object, both being shared state for make.py
-    doit tasks.
-
-    Typical usage:
-
-        C, D = get_context_objects("/path/to/myproj.statefile.json")
-    """
-    if os.path.exists(state_file):
-        C = DefaultDotDict.json_load(open(state_file))
-    else:
-        C = DefaultDotDict()
-    C._metadata.run_at = time.asctime()
-    proc = Popen('git rev-parse HEAD'.split(), stdout=PIPE)
-    commit, _ = proc.communicate()
-    C._metadata.run_commit = commit.strip()
-    C._metadata.__filepath = state_file
-
-    # doit inspects things looking for .create_doit_tasks and
-    # failes when C and D return {}, so add dummy method
-    C.create_doit_tasks = lambda: None
-
-    D = DefaultDotDict()
-    D.create_doit_tasks = C.create_doit_tasks
-
-    return C, D
-
-def run_with_context(func, C):
-    """Run func(), ensuring any changes to C are saved
-
-    Typical usage:
-
-        if __name__ == '__main__':
-            pypanart.run_with_context(main, C)
+from doit.doit_cmd import DoitMain
+from doit.cmd_base import ModuleTaskLoader
+class PyPanArtState(object):
+    """PyPanArtState - Collect state for PyPanArt
     """
 
-    try:
-        C['_metadata']['run_failed'] = True
-        func()
-        C['_metadata']['run_failed'] = False
-    finally:
-        del C['create_doit_tasks']  # see get_context_objects()
-        json.dumps(C, C['_metadata']['__filepath'])
+    def __init__(self, basename, data_sources, parts):
+        """basic inputs
 
-def make_markdown(basename, parts, C):
-    """make_markdown - make markdown
-    """
-    env = jinja2.Environment(
-        loader=jinja2.PackageLoader('parts', '.'),
-        **JINJA_COMMON
-    )
+        :param str basename: basename for article, e.g. "someproj"
+        :param dict data_sources: mapping of names to data paths
+        :param list parts: ordered lists of .md article sections
+        """
+        self.basename = basename
+        self.data_sources = data_sources
+        self.data_dir = "DATA"
+        self.parts = parts
+        self.statefile = self.basename + '.state.json'
+        self.C, self.D = self._get_context_objects(self.statefile)
 
-    X = {
-        'fmt': '{{X.fmt}}',
-    }
+    @staticmethod
+    def _get_context_objects(state_file):
+        """Return (DefaultDotDict,DefaultDotDict), being a persistent (JSON
+        backed) and a runtime only object, both being shared state for make.py
+        doit tasks.
 
-    with open('%s.md' % basename, 'w') as out:
-        for part in parts:
-            template = env.get_template(os.path.basename(part))
-            out.write(template.render(C=C, X=X))
-            out.write('\n\n')
+        Typical usage:
 
-def make_fmt(fmt, basename, C):
-    """make_fmt - make html, pdf, docx, odt, etc. output
+            C, D = get_context_objects("/path/to/myproj.statefile.json")
+        """
+        if os.path.exists(state_file):
+            C = DefaultDotDict.json_load(open(state_file))
+        else:
+            C = DefaultDotDict()
+        C._metadata.run_at = time.asctime()
+        proc = Popen('git rev-parse HEAD'.split(), stdout=PIPE)
+        commit, _ = proc.communicate()
+        C._metadata.run_commit = commit.strip()
+        C._metadata.__filepath = state_file
 
-    :param str fmt: format to make
-    :param str extra: extra params to pass to pandoc
-    """
+        # doit inspects things looking for .create_doit_tasks and
+        # failes when C and D return {}, so add dummy method
+        C.create_doit_tasks = lambda: None
 
-    env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader('.'),
-        **JINJA_COMMON
-    )
-    img_fmt = {
-        'odt': 'png',
-        'html': 'png',
-        'pdf': 'pdf',
-        'docx': 'png',
-    }
-    inc_fmt = {
-        'odt': '.NA',
-        'html': '.css',
-        'pdf': '.inc',
-        'docx': '.NA',
-    }
+        D = DefaultDotDict()
+        D.create_doit_tasks = C.create_doit_tasks
 
-    extra_fmt = {
-        'html': "--toc --mathjax --template html.template",
-        'pdf': "--template manuscript.latex",
-    }
-    extra = extra_fmt.get(fmt, "")
+        return C, D
 
-    template = env.get_template('%s.md' % basename)
-    X = {
-        'fmt': img_fmt[fmt],
-    }
-    with open('%s.%s.md' % (basename, fmt), 'w') as out:
-        out.write(template.render(X=X))
-        out.write('\n')
+    def data_path(self, name):
+        """data_path - return local path for data named in DATA_SOURCES
 
-    filters = "/home/tbrown/.local/lib/python2.7/site-packages"
-    bib = "/mnt/edata/edata/tnbbib/tnb.bib"
-    if not os.path.exists(filters):
-        filters = "C:/Users/tbrown02/AppData/Roaming/Python/Python27/site-packages"
-        bib = "d:/repo/tnbbib/tnb.bib"
+        :param str name: name of data
+        :return: local data path
+        :rtype: str
+        """
+        return os.path.join(self.data_dir, name, os.path.basename(self.data_sources[name]))
 
-    cmd = """pandoc
-       --smart --standalone
-       --filter {filters}/pandoc_fignos.py
-       --filter {filters}/pandoc_eqnos.py
-       --filter {filters}/pandoc_tablenos.py
-       --filter pandoc-citeproc
-       --metadata bibliography={bib}
-       --from markdown-fancy_lists
-       {inc} {extra}
-       """
+    def get_C_D(self):
+        """get_C_D - get persistent and runtime shared state containers
+        """
 
-    inc = ''
-    for inc_i in [i for i in os.listdir('.') if i.endswith(inc_fmt[fmt])]:
-        inc += ' --include-in-header ' + inc_i.replace('.inc', '._inc')
-        template = env.get_template(inc_i)
-        with open(inc_i.replace('.inc', '._inc'), 'w') as out:
-            out.write(template.render(X=X, C=C))
+        return self.C, self.D
+    def make_data_collector(self):
+        """collect_data - collect data from original file system locations"""
+        for name, sources in self.data_sources.items():
+            sources = sources.split(':TYPE:')[0]  # used to manage shapefiles, not here
+            sources = glob(os.path.splitext(sources)[0]+'*')
+            sub_path = os.path.join(self.data_dir, name)
+            targets = [os.path.join(sub_path, os.path.basename(source))
+                       for source in sources]
+            for source, target in zip(sources, targets):
+                yield {
+                    'name': name+target, 'file_dep': [source], 'targets': [target],
+                    'actions': [
+                        (make_dir, (sub_path,)),
+                        (shutil.copy, (source, target)),
+                    ],
+                }
 
-    cmd += """ -o {basename}.{fmt} multiscale.{fmt}.md"""
-    cmd = cmd.format(filters=filters, bib=bib, inc=inc, fmt=fmt,
-        extra=extra, basename=basename)
-    print cmd
-    Popen(cmd.split()).wait()
+    def make_data_loader(self):
+        """load_data - load global data for other tasks"""
+        def load_global(name, D=self.D):
+            self.D.all_inputs.append(self.data_path(name))
+            globals()[name] = np.genfromtxt(
+                data_path(name), delimiter=',', names=True, dtype=None,
+                invalid_raise=False, loose=True)
+        for name in data_sources:
+            if self.data_path(name).endswith('.csv') and name not in self.D:
+                yield {'name': name, 'actions': [(load_global, (name,))]}
+    def make_fmt(self, fmt):
+        """make_fmt - make html, pdf, docx, odt, etc. output
 
-def make_formats(basename, inputs, C, deps=[]):
-    """Yield doit tasks"""
-    yield {
-        'name': 'md',
-        'actions': [(make_markdown, (basename, inputs, C))],
-        'verbosity': 2,
-        'task_dep': deps,
-    }
-    for fmt in 'html pdf odt docx'.split():
-        yield {
-            'name': fmt,
-            'actions': [(make_fmt, (fmt, basename, C))],
-            'verbosity': 2,
-            'task_dep': ['fmt:md'],
-            'file_dep': ['%s.md' % basename],
-            'targets': ['%s.%s' % (basename, fmt)],
+        :param str fmt: format to make
+        :param str extra: extra params to pass to pandoc
+        """
+
+        env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader('.'),
+            **JINJA_COMMON
+        )
+        img_fmt = {
+            'odt': 'png',
+            'html': 'png',
+            'pdf': 'pdf',
+            'docx': 'png',
+        }
+        inc_fmt = {
+            'odt': '.NA',
+            'html': '.css',
+            'pdf': '.inc',
+            'docx': '.NA',
         }
 
+        extra_fmt = {
+            'html': "--toc --mathjax --template html.template",
+            'pdf': "--template manuscript.latex",
+        }
+        extra = extra_fmt.get(fmt, "")
 
+        template = env.get_template('%s.md' % self.basename)
+        X = {
+            'fmt': img_fmt[fmt],
+        }
+        with open('%s.%s.md' % (self.basename, fmt), 'w') as out:
+            out.write(template.render(X=X))
+            out.write('\n')
+
+        filters = "/home/tbrown/.local/lib/python2.7/site-packages"
+        bib = "/mnt/edata/edata/tnbbib/tnb.bib"
+        if not os.path.exists(filters):
+            filters = "C:/Users/tbrown02/AppData/Roaming/Python/Python27/site-packages"
+            bib = "d:/repo/tnbbib/tnb.bib"
+
+        cmd = """pandoc
+           --smart --standalone
+           --filter {filters}/pandoc_fignos.py
+           --filter {filters}/pandoc_eqnos.py
+           --filter {filters}/pandoc_tablenos.py
+           --filter pandoc-citeproc
+           --metadata bibliography={bib}
+           --from markdown-fancy_lists
+           {inc} {extra}
+           """
+
+        inc = ''
+        for inc_i in [i for i in os.listdir('.') if i.endswith(inc_fmt[fmt])]:
+            inc += ' --include-in-header ' + inc_i.replace('.inc', '._inc')
+            template = env.get_template(inc_i)
+            with open(inc_i.replace('.inc', '._inc'), 'w') as out:
+                out.write(template.render(X=X, C=self.C))
+
+        cmd += """ -o {basename}.{fmt} multiscale.{fmt}.md"""
+        cmd = cmd.format(filters=filters, bib=bib, inc=inc, fmt=fmt,
+            extra=extra, basename=basename)
+        print cmd
+        Popen(cmd.split()).wait()
+
+    def make_formats(self, deps=[]):
+        """Yield doit tasks"""
+        yield {
+            'name': 'md',
+            'actions': [(make_markdown, (self.basename, self.parts, self.C))],
+            'verbosity': 2,
+            'task_dep': deps,
+        }
+        for fmt in 'html pdf odt docx'.split():
+            yield {
+                'name': fmt,
+                'actions': [(make_fmt, (fmt, self.basename, self.C))],
+                'verbosity': 2,
+                'task_dep': ['fmt:md'],
+                'file_dep': ['%s.md' % self.basename],
+                'targets': ['%s.%s' % (self.basename, fmt)],
+            }
+
+
+
+
+    def make_markdown(self):
+        """make_markdown - make markdown
+        """
+        env = jinja2.Environment(
+            loader=jinja2.PackageLoader('parts', '.'),
+            **JINJA_COMMON
+        )
+
+        X = {
+            'fmt': '{{X.fmt}}',
+        }
+
+        with open('%s.md' % self.basename, 'w') as out:
+            for part in parts:
+                template = env.get_template(os.path.basename(part))
+                out.write(template.render(C=self.C, X=X))
+                out.write('\n\n')
+
+    def run_with_context(self, func):
+        """Run func(), ensuring any changes to C are saved
+
+        Typical usage:
+
+            if __name__ == '__main__':
+                pypanart.run_with_context(main)
+        """
+
+        try:
+            self.C['_metadata']['run_failed'] = True
+            func()
+            self.C['_metadata']['run_failed'] = False
+        finally:
+            del self.C['create_doit_tasks']  # see get_context_objects()
+            json.dumps(self.C, self.C['_metadata']['__filepath'])
+def make_dir(path):
+    """make_dir - make dirs recursively if not already present
+
+    :param str path: path to dir
+    """
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+def run_task(module, task):
+    """
+    run_task - Have doit run the named task
+
+    :param module module: module containing tasks
+    :param str task: task to run
+    """
+    print 'module'
+    DoitMain(ModuleTaskLoader(module)).run([task])
+def one_task(**kwargs):
+    """one_task - decorator - simple task definition
+    
+    Saves needing to define a function within the task function
+
+    :param function function: plain function to run
+    :return: actions dict pointing to function
+    """
+    def one_task_maker(function):
+        def function_task():
+            d = {'actions':[function]}
+            d.update(kwargs)
+            return d
+        function_task.create_doit_tasks = function_task
+        return function_task
+    return one_task_maker
