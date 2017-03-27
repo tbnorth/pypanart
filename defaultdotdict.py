@@ -6,6 +6,9 @@ adding more DefaultDotDicts when non-existent items are requested.
 
 See main() for a demo.
 
+Master copy lives here:
+https://gist.github.com/tbnorth/61d3b75f26637d9f26c1678c5d94cb8e
+
 Terry N. Brown, terrynbrown@gmail.com, Wed Mar 01 09:44:29 2017
 """
 
@@ -18,16 +21,26 @@ class DefaultDotDict(dict):
         if item not in self:
             self[item] = DefaultDotDict()
         return self[item]
+
+    def __getitem__(self, item):
+        # return the item or an empty DefaultDotDict
+        if item not in self:
+            self[item] = DefaultDotDict()
+        return super(DefaultDotDict, self).__getitem__(item)
+
     def __setattr__(self, key, value):
         self[key] = value
+
     @staticmethod
     def json_object_hook(dct):
         """for JSON's object_hook argument, convert dicts to DefaultDotDicts"""
         return DefaultDotDict(dct)
+
     @staticmethod
     def json_load(fileobj):
         """used like json.load, but uses DefaultDotDict.json_object_hook"""
         return json.load(fileobj, object_hook=DefaultDotDict.json_object_hook)
+
 
 def main():
     """simple test / demo of DefaultDotDict"""
