@@ -12,10 +12,6 @@ JINJA_COMMON = dict(
     undefined=jinja2.StrictUndefined,
 )
 
-class SharedRuntimeState:
-    """A shared runtime state variable for tasks in make.py"""
-    pass
-
 def get_context_objects(state_file):
     """Return (DefaultDotDict,DefaultDotDict), being a persistent (JSON
     backed) and a runtime only object, both being shared state for make.py
@@ -162,7 +158,7 @@ def make_formats(basename, inputs, C, deps=[]):
             'verbosity': 2,
             'task_dep': ['fmt:md'],
             'file_dep': ['%s.md' % basename],
-            'targets': ['%s.md' % fmt],
+            'targets': ['%s.%s' % (basename, fmt)],
         }
 
 
