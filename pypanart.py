@@ -38,6 +38,7 @@ def get_context_objects(state_file):
     # doit inspects things looking for .create_doit_tasks and
     # failes when C and D return {}, so add dummy method
     C.create_doit_tasks = lambda: None
+
     D = DefaultDotDict()
     D.create_doit_tasks = C.create_doit_tasks
 
