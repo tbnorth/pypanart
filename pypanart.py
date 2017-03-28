@@ -16,6 +16,8 @@ JINJA_COMMON = dict(
 
 from doit.doit_cmd import DoitMain
 from doit.cmd_base import ModuleTaskLoader
+
+import numpy as np
 class PyPanArtState(object):
     """PyPanArtState - Collect state for PyPanArt
     """
@@ -33,6 +35,7 @@ class PyPanArtState(object):
         self.parts = parts
         self.statefile = self.basename + '.state.json'
         self.C, self.D = self._get_context_objects(self.statefile)
+        self.D.all_inputs = []
 
     @staticmethod
     def _get_context_objects(state_file):
@@ -99,9 +102,9 @@ class PyPanArtState(object):
         def load_global(name, D=self.D):
             self.D.all_inputs.append(self.data_path(name))
             globals()[name] = np.genfromtxt(
-                data_path(name), delimiter=',', names=True, dtype=None,
+                self.data_path(name), delimiter=',', names=True, dtype=None,
                 invalid_raise=False, loose=True)
-        for name in data_sources:
+        for name in self.data_sources:
             if self.data_path(name).endswith('.csv') and name not in self.D:
                 yield {'name': name, 'actions': [(load_global, (name,))]}
     def make_fmt(self, fmt):
@@ -246,7 +249,7 @@ def run_task(module, task):
     DoitMain(ModuleTaskLoader(module)).run([task])
 def one_task(**kwargs):
     """one_task - decorator - simple task definition
-    
+
     Saves needing to define a function within the task function
 
     :param function function: plain function to run
