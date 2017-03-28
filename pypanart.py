@@ -140,9 +140,10 @@ class PyPanArtState(object):
         template = env.get_template('%s.md' % self.basename)
         X = {
             'fmt': img_fmt[fmt],
+            'now': time.asctime(),
         }
         with open('%s.%s.md' % (self.basename, fmt), 'w') as out:
-            out.write(template.render(X=X))
+            out.write(template.render(X=X).encode('utf-8'))
             out.write('\n')
 
         filters = "/home/tbrown/.local/lib/python2.7/site-packages"
@@ -162,16 +163,18 @@ class PyPanArtState(object):
            {inc} {extra}
            """
 
+        # pass include files through template processor and add to cmd. line
         inc = ''
         for inc_i in [i for i in os.listdir('.') if i.endswith(inc_fmt[fmt])]:
             inc += ' --include-in-header ' + inc_i.replace('.inc', '._inc')
             template = env.get_template(inc_i)
             with open(inc_i.replace('.inc', '._inc'), 'w') as out:
-                out.write(template.render(X=X, C=self.C))
+                out.write(template.render(X=X, C=self.C).encode('utf-8'))
 
-        cmd += """ -o {basename}.{fmt} multiscale.{fmt}.md"""
+        # run pandoc
+        cmd += """ -o {basename}.{fmt} {basename}.{fmt}.md"""
         cmd = cmd.format(filters=filters, bib=bib, inc=inc, fmt=fmt,
-            extra=extra, basename=basename)
+            extra=extra, basename=self.basename)
         print cmd
         Popen(cmd.split()).wait()
 
@@ -179,28 +182,26 @@ class PyPanArtState(object):
         """Yield doit tasks"""
         yield {
             'name': 'md',
-            'actions': [(make_markdown, (self.basename, self.parts, self.C))],
+            'actions': [(self.make_markdown, )],
             'verbosity': 2,
             'task_dep': deps,
         }
         for fmt in 'html pdf odt docx'.split():
             yield {
                 'name': fmt,
-                'actions': [(make_fmt, (fmt, self.basename, self.C))],
+                'actions': [(self.make_fmt, (fmt,))],
                 'verbosity': 2,
                 'task_dep': ['fmt:md'],
                 'file_dep': ['%s.md' % self.basename],
                 'targets': ['%s.%s' % (self.basename, fmt)],
             }
 
-
-
-
     def make_markdown(self):
         """make_markdown - make markdown
         """
         env = jinja2.Environment(
-            loader=jinja2.PackageLoader('parts', '.'),
+            loader=jinja2.FileSystemLoader('parts'),
+            # loader=jinja2.PackageLoader('parts', '.'),
             **JINJA_COMMON
         )
 
@@ -209,9 +210,9 @@ class PyPanArtState(object):
         }
 
         with open('%s.md' % self.basename, 'w') as out:
-            for part in parts:
-                template = env.get_template(os.path.basename(part))
-                out.write(template.render(C=self.C, X=X))
+            for part in self.parts:
+                template = env.get_template(os.path.basename(part+'.md'))
+                out.write(template.render(C=self.C, X=X).encode('utf-8'))
                 out.write('\n\n')
 
     def run_with_context(self, func):
