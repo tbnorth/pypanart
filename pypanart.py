@@ -3,6 +3,7 @@ import json
 import shutil
 import time
 from glob import glob
+from pprint import pprint
 from subprocess import Popen, PIPE
 
 from defaultdotdict import DefaultDotDict
@@ -51,11 +52,11 @@ class PyPanArtState(object):
             C = DefaultDotDict.json_load(open(state_file))
         else:
             C = DefaultDotDict()
-        C._metadata.run_at = time.asctime()
+        C._metadata.run.time = time.asctime()
         proc = Popen('git rev-parse HEAD'.split(), stdout=PIPE)
         commit, _ = proc.communicate()
-        C._metadata.run_commit = commit.strip()
-        C._metadata.__filepath = state_file
+        C._metadata.run.commit = commit.strip()
+        C._metadata._filepath = state_file
 
         # doit inspects things looking for .create_doit_tasks and
         # failes when C and D return {}, so add dummy method
@@ -101,12 +102,17 @@ class PyPanArtState(object):
         """load_data - load global data for other tasks"""
         def load_global(name, D=self.D):
             self.D.all_inputs.append(self.data_path(name))
-            globals()[name] = np.genfromtxt(
+            self.D[name] = np.genfromtxt(
                 self.data_path(name), delimiter=',', names=True, dtype=None,
                 invalid_raise=False, loose=True)
+            globals()[name] = self.D[name]
         for name in self.data_sources:
             if self.data_path(name).endswith('.csv') and name not in self.D:
-                yield {'name': name, 'actions': [(load_global, (name,))]}
+                yield {
+                    'name': name,
+                    'actions': [(load_global, (name,))],
+                    'task_dep': ['data_collector'],
+                }
     def make_fmt(self, fmt):
         """make_fmt - make html, pdf, docx, odt, etc. output
 
@@ -225,12 +231,13 @@ class PyPanArtState(object):
         """
 
         try:
-            self.C['_metadata']['run_failed'] = True
+            self.C._metadata.run.failed = True
             func()
-            self.C['_metadata']['run_failed'] = False
+            self.C._metadata.run.failed = False
         finally:
             del self.C['create_doit_tasks']  # see get_context_objects()
-            json.dumps(self.C, self.C['_metadata']['__filepath'])
+            json.dump(self.C, open(self.C._metadata._filepath, 'w'))
+            print("Results in '%s'" % self.C._metadata._filepath)
 def make_dir(path):
     """make_dir - make dirs recursively if not already present
 
