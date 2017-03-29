@@ -111,7 +111,7 @@ class PyPanArtState(object):
                 yield {
                     'name': name,
                     'actions': [(load_global, (name,))],
-                    'task_dep': ['data_collector'],
+                    'task_dep': ['collect_data'],
                 }
     def make_fmt(self, fmt):
         """make_fmt - make html, pdf, docx, odt, etc. output
