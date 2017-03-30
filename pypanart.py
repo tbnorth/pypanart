@@ -1,6 +1,7 @@
 import os
 import json
 import shutil
+import sys
 import time
 from glob import glob
 from pprint import pprint
@@ -185,7 +186,7 @@ class PyPanArtState(object):
         Popen(cmd.split()).wait()
 
     def make_formats(self, deps=[]):
-        """Yield doit tasks"""
+        """use fmt:pdf, fmt:html, docx, odt, etc."""
         yield {
             'name': 'md',
             'actions': [(self.make_markdown, )],
@@ -202,6 +203,24 @@ class PyPanArtState(object):
                 'targets': ['%s.%s' % (self.basename, fmt)],
             }
 
+    def make_images(self):
+        """make png / pdf figures from svg sources"""
+        inkscape = 'inkscape'
+        if sys.platform == 'win32':
+            inkscape = r'"C:\Program Files\Inkscape\inkscape.exe"'
+        for svg in glob("./img/*.svg"):
+            for format in 'png', 'pdf':
+                out = os.path.splitext(svg)[0]+'.'+format
+                yield {
+                    'name': "%s from %s" % (format, svg),
+                    'actions': [
+                        ("{inkscape} --export-{format}={out} --without-gui "
+                         "--export-area-page {svg}").format(
+                        svg=svg, out=out, format=format, inkscape=inkscape),
+                    ],
+                    'file_dep': [svg],
+                    'targets': [out],
+                }
     def make_markdown(self):
         """make_markdown - make markdown
         """
