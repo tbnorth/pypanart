@@ -27,7 +27,7 @@ try:
 except ImportError:
     plt = None
 
-from pypanart import one_task, run_task, make_dir
+from pypanart import run_task, make_dir
 
 # START: PyPanArt standard tasks
 
@@ -41,7 +41,8 @@ def task_load_data():
 
 def task_fmt():
     """add `fmt:pdf` etc. tasks from pypanart"""
-    yield art.make_formats(D.all_outputs)
+    print D.all_outputs
+    yield art.make_formats(file_dep=D.all_outputs)
 
 def task_img():
     """add `img` task from pypanart"""
@@ -49,7 +50,7 @@ def task_img():
 
 # END: PyPanArt standard tasks
 
-@one_task(
+@art.one_task(
     task_dep=['load_data'],
     file_dep=[art.data_path('ppapts')],
 )
@@ -63,9 +64,9 @@ def basic_math():
     # more "detailed" analysis of ppapts
     C.ppapts.mean.x = D.ppapts['x'].mean()
 
-@one_task(
+@art.one_task(
     task_dep=['load_data', 'basic_math'],
-    file_dep=D.all_inputs,
+    file_dep=[art.data_path('ppapts')],
     targets=["img/basic_plot.png", "img/basic_plot.pdf"],
 )
 def basic_plot():

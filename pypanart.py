@@ -186,21 +186,24 @@ class PyPanArtState(object):
         print cmd
         Popen(cmd.split()).wait()
 
-    def make_formats(self, deps=[]):
+    def make_formats(self, file_dep=None, task_dep=None):
+        file_dep = file_dep or []
+        task_dep = task_dep or []
         """use fmt:pdf, fmt:html, docx, odt, etc."""
         yield {
             'name': 'md',
             'actions': [(self.make_markdown, )],
             'verbosity': 2,
-            'task_dep': deps,
+            'file_dep': file_dep,
+            'task_dep': task_dep,
         }
         for fmt in 'html pdf odt docx'.split():
             yield {
                 'name': fmt,
                 'actions': [(self.make_fmt, (fmt,))],
                 'verbosity': 2,
-                'task_dep': ['fmt:md'],
-                'file_dep': ['%s.md' % self.basename],
+                'task_dep': task_dep + ['fmt:md'],
+                'file_dep': file_dep + ['%s.md' % self.basename],
                 'targets': ['%s.%s' % (self.basename, fmt)],
             }
 
@@ -241,6 +244,24 @@ class PyPanArtState(object):
                 out.write(template.render(C=self.C, X=X).encode('utf-8'))
                 out.write('\n\n')
 
+    def one_task(self, **kwargs):
+        """one_task - decorator - simple task definition
+
+        Saves needing to define a function within the task function
+
+        :param function function: plain function to run
+        :return: actions dict pointing to function
+        """
+        if 'targets' in kwargs:
+            self.D.all_outputs.extend(kwargs['targets'])
+        def one_task_maker(function):
+            def function_task():
+                d = {'actions':[function]}
+                d.update(kwargs)
+                return d
+            function_task.create_doit_tasks = function_task
+            return function_task
+        return one_task_maker
     def run_with_context(self, func):
         """Run func(), ensuring any changes to C are saved
 
@@ -275,21 +296,3 @@ def run_task(module, task):
     """
     print 'module'
     DoitMain(ModuleTaskLoader(module)).run([task])
-def one_task(**kwargs):
-    """one_task - decorator - simple task definition
-
-    Saves needing to define a function within the task function
-
-    :param function function: plain function to run
-    :return: actions dict pointing to function
-    """
-    def one_task_maker(function):
-        def function_task():
-            # if 'targets' in kwargs:
-            #     D.all_outputs.extend(kwargs['targets'])
-            d = {'actions':[function]}
-            d.update(kwargs)
-            return d
-        function_task.create_doit_tasks = function_task
-        return function_task
-    return one_task_maker
