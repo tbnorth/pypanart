@@ -24,7 +24,7 @@ class PyPanArtState(object):
     """PyPanArtState - Collect state for PyPanArt
     """
 
-    def __init__(self, basename, data_sources, parts):
+    def __init__(self, basename, data_sources, parts, bib=None):
         """basic inputs
 
         :param str basename: basename for article, e.g. "someproj"
@@ -39,7 +39,14 @@ class PyPanArtState(object):
         self.C, self.D = self._get_context_objects(self.statefile)
         self.D.all_inputs = []
         self.D.all_outputs = []
-
+        # use the first bibliography file found
+        bib = [i for i in bib or [] if os.path.exists(i)]
+        if bib:
+            self.bib = bib[0]
+            # output formats depehd on D.all_outputs, so append to that
+            self.D.all_outputs.append(self.bib)
+        else:
+            self.bib = None
     @staticmethod
     def _get_context_objects(state_file):
         """Return (DefaultDotDict,DefaultDotDict), being a persistent (JSON
@@ -155,10 +162,13 @@ class PyPanArtState(object):
             out.write('\n')
 
         filters = "/home/tbrown/.local/lib/python2.7/site-packages"
-        bib = "/mnt/edata/edata/tnbbib/tnb.bib"
         if not os.path.exists(filters):
             filters = "C:/Users/tbrown02/AppData/Roaming/Python/Python27/site-packages"
-            bib = "d:/repo/tnbbib/tnb.bib"
+
+        if self.bib:
+            bib = '--metadata bibliography="%s"' % self.bib
+        else:
+            bib = ''
 
         cmd = """pandoc
            --smart --standalone
@@ -166,7 +176,7 @@ class PyPanArtState(object):
            --filter {filters}/pandoc_eqnos.py
            --filter {filters}/pandoc_tablenos.py
            --filter pandoc-citeproc
-           --metadata bibliography={bib}
+           {bib}
            --from markdown-fancy_lists
            {inc} {extra}
            """
