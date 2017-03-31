@@ -41,8 +41,7 @@ def task_load_data():
 
 def task_fmt():
     """add `fmt:pdf` etc. tasks from pypanart"""
-    print D.all_outputs
-    yield art.make_formats(file_dep=D.all_outputs)
+    yield art.make_formats()
 
 def task_img():
     """add `img` task from pypanart"""

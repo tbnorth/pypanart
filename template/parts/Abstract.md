@@ -4,8 +4,6 @@ author:
 - affilnum: 1
   email: terrynbrown@gmail.com
   name: Terry N. Brown
-- affilnum: 1
-  name: Terry N. Brown
 affiliation:
 - affil: Undetermined
   affilnum: 1

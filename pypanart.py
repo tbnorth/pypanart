@@ -189,6 +189,7 @@ class PyPanArtState(object):
     def make_formats(self, file_dep=None, task_dep=None):
         file_dep = file_dep or []
         task_dep = task_dep or []
+        file_dep = file_dep + self.D.all_outputs + ['parts/%s.md'%i for i in self.parts]
         """use fmt:pdf, fmt:html, docx, odt, etc."""
         yield {
             'name': 'md',
@@ -202,11 +203,10 @@ class PyPanArtState(object):
                 'name': fmt,
                 'actions': [(self.make_fmt, (fmt,))],
                 'verbosity': 2,
+                'file_dep': file_dep,
                 'task_dep': task_dep + ['fmt:md'],
-                'file_dep': file_dep + ['%s.md' % self.basename],
                 'targets': ['%s.%s' % (self.basename, fmt)],
             }
-
     def make_images(self):
         """make png / pdf figures from svg sources"""
         inkscape = 'inkscape'
