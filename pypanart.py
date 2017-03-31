@@ -38,6 +38,7 @@ class PyPanArtState(object):
         self.statefile = self.basename + '.state.json'
         self.C, self.D = self._get_context_objects(self.statefile)
         self.D.all_inputs = []
+        self.D.all_outputs = []
 
     @staticmethod
     def _get_context_objects(state_file):
@@ -284,6 +285,8 @@ def one_task(**kwargs):
     """
     def one_task_maker(function):
         def function_task():
+            # if 'targets' in kwargs:
+            #     D.all_outputs.extend(kwargs['targets'])
             d = {'actions':[function]}
             d.update(kwargs)
             return d

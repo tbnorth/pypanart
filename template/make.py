@@ -41,7 +41,7 @@ def task_load_data():
 
 def task_fmt():
     """add `fmt:pdf` etc. tasks from pypanart"""
-    yield art.make_formats()
+    yield art.make_formats(D.all_outputs)
 
 def task_img():
     """add `img` task from pypanart"""
@@ -66,6 +66,7 @@ def basic_math():
 @one_task(
     task_dep=['load_data', 'basic_math'],
     file_dep=D.all_inputs,
+    targets=["img/basic_plot.png", "img/basic_plot.pdf"],
 )
 def basic_plot():
     """
@@ -77,16 +78,18 @@ def basic_plot():
     d = C.ppapts  # convenient shorthand
     d.slope, d.intercept, d.r_value, d.p_value, d.std_err = scipy.stats.linregress(x, y)
     x0 = x.min() - 500
-    y0 = d.intercept + x0 * slope
+    y0 = d.intercept + x0 * d.slope
     x1 = x.max() + 500
-    y1 = d.intercept + x1 * slope
+    y1 = d.intercept + x1 * d.slope
     plt.plot([x0, x1], [y0, y1], c='red')
+    plt.scatter(x, y, lw=0.5, facecolor='none', edgecolor='black')
     plt.xlim(xlim)
     plt.ylim(ylim)
     plt.text(-1200, 600, "$r^2=$%s"%np.round(d.r_value, 2))
     
-    plt.savefig("img/basic_plot.png")
-    plt.savefig("img/basic_plot.pdf")
+    for fmt in 'png', 'pdf':
+        filepath = "img/basic_plot."+fmt
+        plt.savefig(filepath)
 def main():
     """run task specified from command line"""
     run_task(globals(), sys.argv[1])
