@@ -139,8 +139,8 @@ class PyPanArtState(object):
         }
 
         extra_fmt = {
-            'html': "--toc --mathjax --template html.template",
-            'pdf': "--template manuscript.latex",
+            'html': "--toc --mathjax --template doc-setup/html.template",
+            'pdf': "--template doc-setup/manuscript.latex",
         }
         extra = extra_fmt.get(fmt, "")
 
