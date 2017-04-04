@@ -207,6 +207,7 @@ class PyPanArtState(object):
             'verbosity': 2,
             'file_dep': file_dep,
             'task_dep': task_dep,
+            'targets': ['%s.md' % self.basename],
         }
         for fmt in 'html pdf odt docx'.split():
             yield {
