@@ -93,19 +93,24 @@ class PyPanArtState(object):
     def make_data_collector(self):
         """collect_data - collect data from original file system locations"""
         for name, sources in self.data_sources.items():
+            print name
+            print sources
+            
             sources = sources.split(':TYPE:')[0]  # used to manage shapefiles, not here
             sources = glob(os.path.splitext(sources)[0]+'*')
             sub_path = os.path.join(self.data_dir, name)
             targets = [os.path.join(sub_path, os.path.basename(source))
                        for source in sources]
             for source, target in zip(sources, targets):
-                yield {
+                task = {
                     'name': name+target, 'file_dep': [source], 'targets': [target],
                     'actions': [
                         (make_dir, (sub_path,)),
                         (shutil.copy, (source, target)),
                     ],
                 }
+                print task
+                yield task
 
     def make_data_loader(self):
         """load_data - load global data for other tasks"""
