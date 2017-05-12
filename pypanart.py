@@ -151,9 +151,10 @@ class PyPanArtState(object):
             'docx': '.NA',
         }
 
+        here = os.path.dirname(__file__)
         extra_fmt = {
-            'html': "--toc --mathjax --template doc-setup/html.template",
-            'pdf': "--template doc-setup/manuscript.latex",
+            'html': "--toc --mathjax --template %s/template/doc-setup/html.template" % here,
+            'pdf': "--template %s/template/doc-setup/manuscript.latex" % here,
         }
         extra = extra_fmt.get(fmt, "")
 
@@ -166,10 +167,6 @@ class PyPanArtState(object):
             out.write(template.render(X=X).encode('utf-8'))
             out.write('\n')
 
-        filters = "/home/tbrown/.local/lib/python2.7/site-packages"
-        if not os.path.exists(filters):
-            filters = "C:/Users/tbrown02/AppData/Roaming/Python/Python27/site-packages"
-
         if self.bib:
             bib = '--metadata bibliography="%s"' % self.bib
         else:
@@ -177,14 +174,20 @@ class PyPanArtState(object):
 
         cmd = """pandoc
            --smart --standalone
-           --filter {filters}/pandoc_fignos.py
-           --filter {filters}/pandoc_eqnos.py
-           --filter {filters}/pandoc_tablenos.py
            --filter pandoc-citeproc
            {bib}
            --from markdown-fancy_lists
            {inc} {extra}
            """
+
+        filters = "/home/tbrown/.local/lib/python2.7/site-packages"
+        if not os.path.exists(filters+"/pandoc_fignos.py"):
+            filters = "C:/Users/tbrown02/AppData/Roaming/Python/Python27/site-packages"
+        if not os.path.exists(filters):
+            filters = ""
+        for filter_ in 'pandoc-fignos', 'pandoc-eqnos', 'pandoc-tablenos':
+            filter_ = ("%s/%s.py" % (filters, filter_.replace('-', '_'))) if filters else filter_
+            cmd += '\n      --filter %s' % filter_
 
         # pass include files through template processor and add to cmd. line
         inc = ''
