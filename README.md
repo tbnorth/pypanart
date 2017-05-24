@@ -2,7 +2,7 @@
 
 Early stages (20170327) of a Python based journal article generator.
 
-Similar to by different from the [R-markdown](http://rmarkdown.rstudio.com/)
+Similar to but different from the [R-markdown](http://rmarkdown.rstudio.com/)
 pipeline.  Uses [pandoc](http://pandoc.org/), like R-markdown.  In place of
 [knitr](https://yihui.name/knitr/) (the substance behind R-markdown ;-) it
 uses [DoIt](http://pydoit.org/) for task dependency management, and
