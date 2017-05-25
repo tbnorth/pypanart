@@ -161,7 +161,6 @@ class PyPanArtState(object):
         template = env.get_template('%s.md' % self.basename)
         X = {
             'fmt': img_fmt[fmt],
-            'now': time.asctime(),
         }
         with open('%s.%s.md' % (self.basename, fmt), 'w') as out:
             out.write(template.render(X=X).encode('utf-8'))
@@ -255,6 +254,7 @@ class PyPanArtState(object):
 
         X = {
             'fmt': '{{X.fmt}}',
+            'now': time.asctime(),
         }
 
         with open('%s.md' % self.basename, 'w') as out:
