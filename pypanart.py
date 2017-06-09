@@ -78,14 +78,6 @@ class PyPanArtState(object):
 
         return C, D
 
-    def cp_file(self, src, dst):
-        """cp_file - copy src to dst
-
-        :param str src: source file
-        :param str dst: destination file
-        """
-
-        shutil.copyfile(src, dst)
     def data_path(self, name):
         """data_path - return local path for data named in DATA_SOURCES
 
@@ -111,7 +103,7 @@ class PyPanArtState(object):
 
         base = 'build/tmp/img' if format == 'pdf' else 'build/html/img'
         path = "%s.%s" % (os.path.join(base, path), format)
-        self.make_dir(os.path.dirname(path))
+        make_dir(os.path.dirname(path))
         return path
 
     def make_data_collector(self):
@@ -151,14 +143,6 @@ class PyPanArtState(object):
                     'actions': [(load_global, (name,))],
                     'task_dep': ['collect_data'],
                 }
-    def make_dir(self, path):
-        """make_dir - make subdirectories as needed
-
-        :param str path: path to make
-        """
-
-        if not os.path.exists(path):
-            os.makedirs(path)
     def make_fmt(self, fmt):
         """make_fmt - make html, pdf, docx, odt, etc. output
 
@@ -286,7 +270,7 @@ class PyPanArtState(object):
                         yield {
                             'name': "%s from %s" % (format, src),
                             'actions': [
-                                (self.make_dir, (os.path.join(out_path, path),)),
+                                (make_dir, (os.path.join(out_path, path),)),
                                 ("{inkscape} --export-{format}={out} --without-gui "
                                  "--export-area-page {svg}").format(
                                 svg=src, out=out, format=format, inkscape=inkscape),
@@ -300,8 +284,8 @@ class PyPanArtState(object):
                     yield {
                         'name': "%s from %s" % (out, src),
                         'actions': [
-                            (self.make_dir, (os.path.dirname(out),)),
-                            (self.cp_file, (src, out)),
+                            (make_dir, (os.path.dirname(out),)),
+                            (cp_file, (src, out)),
                         ],
                         'file_dep': [src],
                         'targets': [out],
@@ -321,7 +305,7 @@ class PyPanArtState(object):
             'now': time.asctime(),
         }
 
-        self.make_dir('build/tmp')
+        make_dir('build/tmp')
         with open('build/tmp/%s.md' % self.basename, 'w') as out:
             for part in self.parts:
                 template = env.get_template(os.path.basename(part+'.md'))
@@ -363,6 +347,14 @@ class PyPanArtState(object):
             del self.C['create_doit_tasks']  # see get_context_objects()
             json.dump(self.C, open(self.C._metadata._filepath, 'w'))
             print("Results in '%s'" % self.C._metadata._filepath)
+def cp_file(src, dst):
+    """cp_file - copy src to dst
+
+    :param str src: source file
+    :param str dst: destination file
+    """
+
+    shutil.copyfile(src, dst)
 def make_dir(path):
     """make_dir - make dirs recursively if not already present
 
