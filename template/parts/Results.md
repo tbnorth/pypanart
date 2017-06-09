@@ -1,4 +1,4 @@
 # Results
 
-![“Analysis” of {{C.n.pts}} with a mean $x$ value of {{C.ppapts.mean.x}}](img/basic_plot.{{X.fmt}}){#fig:basic_plot}
+![“Analysis” of {{C.n.pts}} with a mean $x$ value of {{C.ppapts.mean.x}}]({{'basic_plot'|img}}){#fig:basic_plot}
 

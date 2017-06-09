@@ -55,4 +55,14 @@ Command | Results
 `python make.py img` | Render SVG images to PNG/PDF, copy PNG images to `build/`
 `python make.py fmt:html` | HTML output in `build/html`
 `python make.py fmt:pdf` | HTML output in `build/pdf`
+`python make.py list` | List other build targets.
+
+For example you might define `doit` tasks to perform analysis or
+generate plots (figures).
+
+## Building results
+FIXME: doc. C / D state vars. / persistence
+
+## Data collection
+FIXME: doc. build/DATA collection thing
 

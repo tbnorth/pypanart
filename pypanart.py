@@ -37,7 +37,7 @@ class PyPanArtState(object):
         self.data_sources = data_sources
         self.data_dir = "DATA"
         self.parts = parts
-        self.statefile = self.basename + '.state.json'
+        self.statefile = 'build/' + self.basename + '.state.json'
         self.C, self.D = self._get_context_objects(self.statefile)
         self.D.all_inputs = []
         self.D.all_outputs = []
@@ -78,6 +78,14 @@ class PyPanArtState(object):
 
         return C, D
 
+    def cp_file(self, src, dst):
+        """cp_file - copy src to dst
+
+        :param str src: source file
+        :param str dst: destination file
+        """
+
+        shutil.copyfile(src, dst)
     def data_path(self, name):
         """data_path - return local path for data named in DATA_SOURCES
 
@@ -92,6 +100,20 @@ class PyPanArtState(object):
         """
 
         return self.C, self.D
+    def image_path(self, format, path):
+        """image_path - return path for an image format
+
+        :param str format: 'png' or 'pdf'
+        :param str path: the subpath for the image
+        :return: full path for image
+        :rtype: str
+        """
+
+        base = 'build/tmp/img' if format == 'pdf' else 'build/html/img'
+        path = "%s.%s" % (os.path.join(base, path), format)
+        self.make_dir(os.path.dirname(path))
+        return path
+
     def make_data_collector(self):
         """collect_data - collect data from original file system locations"""
         for name, sources in self.data_sources.items():
@@ -168,11 +190,23 @@ class PyPanArtState(object):
         }
         extra = extra_fmt.get(fmt, "")
 
-        template = env.get_template('%s.md' % self.basename)
+        def path_to_image(path, fmt):
+            base = "build/"+("tmp/img/" if fmt == 'pdf' else "html/img/")
+            path = os.path.join(base, path)
+            self.C.path = path
+            if not os.path.exists(path):
+                path += '.pdf' if fmt == 'pdf' else '.png'
+            if not os.path.exists(path):
+                print("WARNING: '%s' does not exist" % path)
+            return path
+
+        env.filters['img'] = lambda path, fmt=fmt: path_to_image(path, fmt)
+
+        template = env.get_template('build/tmp/%s.md' % self.basename)
         X = {
             'fmt': img_fmt[fmt],
         }
-        with open('%s.%s.md' % (self.basename, fmt), 'w') as out:
+        with open('build/tmp/%s.%s.md' % (self.basename, fmt), 'w') as out:
             out.write(template.render(X=X).encode('utf-8'))
             out.write('\n')
 
@@ -207,16 +241,17 @@ class PyPanArtState(object):
                 out.write(template.render(X=X, C=self.C).encode('utf-8'))
 
         # run pandoc
-        cmd += """ -o {basename}.{fmt} {basename}.{fmt}.md"""
+        cmd += """ -o build/{fmt}/{basename}.{fmt} build/tmp/{basename}.{fmt}.md"""
         cmd = cmd.format(filters=filters, bib=bib, inc=inc, fmt=fmt,
             extra=extra, basename=self.basename)
         print cmd
+        make_dir("build/%s" % fmt)
         Popen(cmd.split()).wait()
 
     def make_formats(self, file_dep=None, task_dep=None):
         file_dep = file_dep or []
         task_dep = task_dep or []
-        file_dep = file_dep + self.D.all_outputs + ['parts/%s.md'%i for i in self.parts]
+        file_dep += self.D.all_outputs + ['parts/%s.md'%i for i in self.parts]
         """use fmt:pdf, fmt:html, docx, odt, etc."""
         yield {
             'name': 'md',
@@ -224,8 +259,9 @@ class PyPanArtState(object):
             'verbosity': 2,
             'file_dep': file_dep,
             'task_dep': task_dep,
-            'targets': ['%s.md' % self.basename],
+            'targets': ['build/tmp/%s.md' % self.basename],
         }
+        file_dep += ['build/tmp/%s.md' % self.basename]
         for fmt in 'html pdf odt docx'.split():
             yield {
                 'name': fmt,
@@ -233,7 +269,7 @@ class PyPanArtState(object):
                 'verbosity': 2,
                 'file_dep': file_dep,
                 'task_dep': task_dep + ['fmt:md'],
-                'targets': ['%s.%s' % (self.basename, fmt)],
+                'targets': ['build/tmp/%s.%s' % (self.basename, fmt)],
             }
     def make_images(self):
         """make png / pdf figures from svg sources"""
@@ -242,19 +278,30 @@ class PyPanArtState(object):
             inkscape = r'"C:\Program Files\Inkscape\inkscape.exe"'
         for path, dirs, files in os.walk("./img"):
             dirs[:] = [i for i in dirs if i != 'base']
-            files = [i for i in files if i[-4:].lower() == '.svg']
-            for out_path, format in (('build/html', 'png'), ('build/tmp', 'pdf')):
-                for filename in files:
+            for filename in files:
+                if filename[-4:].lower() == '.svg':
+                    for out_path, format in (('build/html', 'png'), ('build/tmp', 'pdf')):
+                        src = os.path.join(path, filename)
+                        out = os.path.join(out_path, path, filename[:-4]+'.'+format)
+                        yield {
+                            'name': "%s from %s" % (format, src),
+                            'actions': [
+                                (self.make_dir, (os.path.join(out_path, path),)),
+                                ("{inkscape} --export-{format}={out} --without-gui "
+                                 "--export-area-page {svg}").format(
+                                svg=src, out=out, format=format, inkscape=inkscape),
+                            ],
+                            'file_dep': [src],
+                            'targets': [out],
+                        }
+                else:
                     src = os.path.join(path, filename)
-                    out = os.path.join(out_path, path, filename[:-4]+'.'+format)
-
+                    out = os.path.join('build/html', path, filename)
                     yield {
-                        'name': "%s from %s" % (format, src),
+                        'name': "%s from %s" % (out, src),
                         'actions': [
-                            (make_dir, (os.path.join(out_path, path),)),
-                            ("{inkscape} --export-{format}={out} --without-gui "
-                             "--export-area-page {svg}").format(
-                            svg=src, out=out, format=format, inkscape=inkscape),
+                            (self.make_dir, (os.path.dirname(out),)),
+                            (self.cp_file, (src, out)),
                         ],
                         'file_dep': [src],
                         'targets': [out],
@@ -268,12 +315,14 @@ class PyPanArtState(object):
             **JINJA_COMMON
         )
 
+        env.filters['img'] = lambda path: "{{'%s'|img}}" % path
         X = {
             'fmt': '{{X.fmt}}',
             'now': time.asctime(),
         }
 
-        with open('%s.md' % self.basename, 'w') as out:
+        self.make_dir('build/tmp')
+        with open('build/tmp/%s.md' % self.basename, 'w') as out:
             for part in self.parts:
                 template = env.get_template(os.path.basename(part+'.md'))
                 out.write(template.render(C=self.C, X=X).encode('utf-8'))

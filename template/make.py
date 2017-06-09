@@ -52,7 +52,7 @@ def task_img():
 
 @art.one_task(
     task_dep=['load_data'],
-    file_dep=[art.data_path('ppapts')],
+    # file_dep=[art.data_path('ppapts')],
 )
 def basic_math():
     """
@@ -67,7 +67,7 @@ def basic_math():
 @art.one_task(
     task_dep=['load_data', 'basic_math'],
     file_dep=[art.data_path('ppapts')],
-    targets=["img/basic_plot.png", "img/basic_plot.pdf"],
+    targets=[art.image_path(fmt, 'basic_plot') for fmt in ("png", "pdf")],
 )
 def basic_plot():
     """
@@ -89,7 +89,7 @@ def basic_plot():
     plt.text(-1200, 600, "$r^2=$%s"%np.round(d.r_value, 2))
     
     for fmt in 'png', 'pdf':
-        filepath = "img/basic_plot."+fmt
+        filepath = art.image_path(fmt, 'basic_plot')
         plt.savefig(filepath)
 def main():
     """run task specified from command line"""
