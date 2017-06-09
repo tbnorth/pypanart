@@ -35,7 +35,7 @@ class PyPanArtState(object):
         """
         self.basename = basename
         self.data_sources = data_sources
-        self.data_dir = "DATA"
+        self.data_dir = "build/DATA"
         self.parts = parts
         self.statefile = 'build/' + self.basename + '.state.json'
         self.C, self.D = self._get_context_objects(self.statefile)
