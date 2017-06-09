@@ -24,16 +24,20 @@ Well almost standard, `{{X.fmt}}` is handled by PyPanArt to insert .png
 in HTML outputs and .pdf in .pdf outputs, if available.  If you only have
 one format, you'd use `image.png` for example explicitly.
 
+## PyPanArt file layout
+A PyPanArt article's folders should be layed out like this:
+
+ - `make.py` - the makefile for the article.
+ - `parts/*.md` - `Abstract.md`, `Introduction.md`, etc.
+ - `imgs/*` - `.svg` files in this folder will be rendered to
+   `build/html/img/*.png` and `build/tmp/img/*.pdf` for inclusion
+   in HTML and PDF outputs.
+ - `imgs/base/*` files here will not be copied into `build/html/img/`,
+   so this is a good place for images used by `.svg` files in `imgs/*`.
+ - `doc-setup` - templates and includes you might want to edit on a
+   per article basis.
+
 ## `make.py`, basic functions
 
 FIXME: doc. this
-
-## PyPanArt file layout
-
-Markdown parts go in a directory called `parts`, and have an `.md` extension.
-
-For SVG files in a directory called `img`, PNG and PDF versions will be
-generated when the `img` task is run.  PNG (or PDF) images that are not
-generated from an SVG source should go in `img/base`.  SVG can link to them
-there as needed.
 

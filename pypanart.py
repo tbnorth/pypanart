@@ -4,7 +4,6 @@ import shutil
 import sys
 import time
 from glob import glob
-from pprint import pprint
 from subprocess import Popen, PIPE
 
 from defaultdotdict import DefaultDotDict
@@ -19,7 +18,10 @@ JINJA_COMMON = dict(
 from doit.doit_cmd import DoitMain
 from doit.cmd_base import ModuleTaskLoader
 
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    np = None
 class PyPanArtState(object):
     """PyPanArtState - Collect state for PyPanArt
     """
@@ -127,6 +129,14 @@ class PyPanArtState(object):
                     'actions': [(load_global, (name,))],
                     'task_dep': ['collect_data'],
                 }
+    def make_dir(self, path):
+        """make_dir - make subdirectories as needed
+
+        :param str path: path to make
+        """
+
+        if not os.path.exists(path):
+            os.makedirs(path)
     def make_fmt(self, fmt):
         """make_fmt - make html, pdf, docx, odt, etc. output
 
@@ -230,19 +240,25 @@ class PyPanArtState(object):
         inkscape = 'inkscape'
         if sys.platform == 'win32':
             inkscape = r'"C:\Program Files\Inkscape\inkscape.exe"'
-        for svg in glob("./img/*.svg"):
-            for format in 'png', 'pdf':
-                out = os.path.splitext(svg)[0]+'.'+format
-                yield {
-                    'name': "%s from %s" % (format, svg),
-                    'actions': [
-                        ("{inkscape} --export-{format}={out} --without-gui "
-                         "--export-area-page {svg}").format(
-                        svg=svg, out=out, format=format, inkscape=inkscape),
-                    ],
-                    'file_dep': [svg],
-                    'targets': [out],
-                }
+        for path, dirs, files in os.walk("./img"):
+            dirs[:] = [i for i in dirs if i != 'base']
+            files = [i for i in files if i[-4:].lower() == '.svg']
+            for out_path, format in (('build/html', 'png'), ('build/tmp', 'pdf')):
+                for filename in files:
+                    src = os.path.join(path, filename)
+                    out = os.path.join(out_path, path, filename[:-4]+'.'+format)
+
+                    yield {
+                        'name': "%s from %s" % (format, src),
+                        'actions': [
+                            (make_dir, (os.path.join(out_path, path),)),
+                            ("{inkscape} --export-{format}={out} --without-gui "
+                             "--export-area-page {svg}").format(
+                            svg=src, out=out, format=format, inkscape=inkscape),
+                        ],
+                        'file_dep': [src],
+                        'targets': [out],
+                    }
     def make_markdown(self):
         """make_markdown - make markdown
         """
