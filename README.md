@@ -29,15 +29,30 @@ A PyPanArt article's folders should be layed out like this:
 
  - `make.py` - the makefile for the article.
  - `parts/*.md` - `Abstract.md`, `Introduction.md`, etc.
+ - `build/` - PyPanArt will create this for outputs.
  - `imgs/*` - `.svg` files in this folder will be rendered to
    `build/html/img/*.png` and `build/tmp/img/*.pdf` for inclusion
    in HTML and PDF outputs.
- - `imgs/base/*` files here will not be copied into `build/html/img/`,
-   so this is a good place for images used by `.svg` files in `imgs/*`.
+ - `imgs/.../base/*` files in folders called `base` will not be copied
+   into `build/html/img/`, so this is a good place for images used by
+   `.svg` files in `imgs/*`.
  - `doc-setup` - templates and includes you might want to edit on a
    per article basis.
 
-## `make.py`, basic functions
 
-FIXME: doc. this
+The template folder in the PyPanArt repository has this structure, you
+can just `cp -r template/* my_article/`.
+
+## `make.py`, basic functions
+The `make.py` in the `template` folder will build an example document.
+PyPanArt uses [doit](http://pydoit.org/) to manage constructing articles.
+The default `make.py` imports `doit` tasks to collect data, render images,
+and generate output formats:
+
+Command | Results
+--- | ---
+`python make.py collect_data` | Collect data in `build,DATA`, see [Data collection](#data-collection)
+`python make.py img` | Render SVG images to PNG/PDF, copy PNG images to `build/`
+`python make.py fmt:html` | HTML output in `build/html`
+`python make.py fmt:pdf` | HTML output in `build/pdf`
 
