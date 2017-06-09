@@ -285,7 +285,7 @@ class PyPanArtState(object):
                         'name': "%s from %s" % (out, src),
                         'actions': [
                             (make_dir, (os.path.dirname(out),)),
-                            (cp_file, (src, out)),
+                            (shutil.copyfileq, (src, out)),
                         ],
                         'file_dep': [src],
                         'targets': [out],
@@ -347,14 +347,6 @@ class PyPanArtState(object):
             del self.C['create_doit_tasks']  # see get_context_objects()
             json.dump(self.C, open(self.C._metadata._filepath, 'w'))
             print("Results in '%s'" % self.C._metadata._filepath)
-def cp_file(src, dst):
-    """cp_file - copy src to dst
-
-    :param str src: source file
-    :param str dst: destination file
-    """
-
-    shutil.copyfile(src, dst)
 def make_dir(path):
     """make_dir - make dirs recursively if not already present
 
