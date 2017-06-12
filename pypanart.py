@@ -22,6 +22,7 @@ try:
     import numpy as np
 except ImportError:
     np = None
+
 class PyPanArtState(object):
     """PyPanArtState - Collect state for PyPanArt
     """
@@ -49,6 +50,7 @@ class PyPanArtState(object):
             self.D.all_outputs.append(self.bib)
         else:
             self.bib = None
+
     @staticmethod
     def _get_context_objects(state_file):
         """Return (DefaultDotDict,DefaultDotDict), being a persistent (JSON
@@ -92,26 +94,36 @@ class PyPanArtState(object):
         """
 
         return self.C, self.D
-    def image_path(self, format, path):
+
+    def image_path(self, path, format=None):
         """image_path - return path for an image format
 
-        :param str format: 'png' or 'pdf'
+        If format is a list, return a list of paths, else return a single path (str).
+        If format is None, defaults to ['png', 'pdf'].
+
         :param str path: the subpath for the image
+        :param str|list format: 'png' or 'pdf'
         :return: full path for image
         :rtype: str
         """
 
-        base = 'build/tmp/img' if format == 'pdf' else 'build/html/img'
-        path = "%s.%s" % (os.path.join(base, path), format)
-        make_dir(os.path.dirname(path))
-        return path
+        if format is None:
+            format = ['png', 'pdf']
+
+        if isinstance(format, (list, tuple)):
+            return [self.image_path(path, i) for i in format]
+        else:
+            base = 'build/tmp/img' if format == 'pdf' else 'build/html/img'
+            path = "%s.%s" % (os.path.join(base, path), format)
+            make_dir(os.path.dirname(path))
+            return path
 
     def make_data_collector(self):
         """collect_data - collect data from original file system locations"""
         for name, sources in self.data_sources.items():
             print name
             print sources
-            
+
             sources = sources.split(':TYPE:')[0]  # used to manage shapefiles, not here
             sources = glob(os.path.splitext(sources)[0]+'*')
             sub_path = os.path.join(self.data_dir, name)
@@ -143,6 +155,7 @@ class PyPanArtState(object):
                     'actions': [(load_global, (name,))],
                     'task_dep': ['collect_data'],
                 }
+
     def make_fmt(self, fmt):
         """make_fmt - make html, pdf, docx, odt, etc. output
 
@@ -255,6 +268,7 @@ class PyPanArtState(object):
                 'task_dep': task_dep + ['fmt:md'],
                 'targets': ['build/tmp/%s.%s' % (self.basename, fmt)],
             }
+
     def make_images(self):
         """make png / pdf figures from svg sources"""
         inkscape = 'inkscape'
@@ -285,11 +299,12 @@ class PyPanArtState(object):
                         'name': "%s from %s" % (out, src),
                         'actions': [
                             (make_dir, (os.path.dirname(out),)),
-                            (shutil.copyfileq, (src, out)),
+                            (shutil.copyfile, (src, out)),
                         ],
                         'file_dep': [src],
                         'targets': [out],
                     }
+
     def make_markdown(self):
         """make_markdown - make markdown
         """
@@ -320,6 +335,11 @@ class PyPanArtState(object):
         :param function function: plain function to run
         :return: actions dict pointing to function
         """
+        if 'active' in kwargs:
+            if kwargs['active']:
+                del kwargs['active']
+            else:
+                return lambda(function): None
         if 'targets' in kwargs:
             self.D.all_outputs.extend(kwargs['targets'])
         def one_task_maker(function):
@@ -330,6 +350,7 @@ class PyPanArtState(object):
             function_task.create_doit_tasks = function_task
             return function_task
         return one_task_maker
+
     def run_with_context(self, func):
         """Run func(), ensuring any changes to C are saved
 
@@ -345,8 +366,11 @@ class PyPanArtState(object):
             self.C._metadata.run.failed = False
         finally:
             del self.C['create_doit_tasks']  # see get_context_objects()
+            make_dir(os.path.dirname(self.C._metadata._filepath))
             json.dump(self.C, open(self.C._metadata._filepath, 'w'))
             print("Results in '%s'" % self.C._metadata._filepath)
+
+
 def make_dir(path):
     """make_dir - make dirs recursively if not already present
 
@@ -364,3 +388,5 @@ def run_task(module, task):
     """
     print 'module'
     DoitMain(ModuleTaskLoader(module)).run([task])
+
+

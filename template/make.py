@@ -33,11 +33,19 @@ from pypanart import run_task, make_dir
 # START: PyPanArt standard tasks
 
 def task_collect_data():
-    """add `collect_data` task from pypanart"""
+    """add `collect_data` task from pypanart
+    
+    This is 1/3 boiler plate functions that must occur in PyPanArt
+    make.py files.
+    """
     yield art.make_data_collector()
 
 def task_load_data():
-    """add `load_data` task from pypanart"""
+    """add `load_data` task from pypanart
+    
+    This is 2/3 boiler plate functions that must occur in PyPanArt
+    make.py files.
+    """
     yield art.make_data_loader()
 
 def task_fmt():
@@ -45,7 +53,11 @@ def task_fmt():
     yield art.make_formats()
 
 def task_img():
-    """add `img` task from pypanart"""
+    """add `img` task from pypanart
+    
+    This is 3/3 boiler plate functions that must occur in PyPanArt
+    make.py files.
+    """
     yield art.make_images()
 
 # END: PyPanArt standard tasks
@@ -67,7 +79,7 @@ def basic_math():
 @art.one_task(
     task_dep=['load_data', 'basic_math'],
     file_dep=[art.data_path('ppapts')],
-    targets=[art.image_path(fmt, 'basic_plot') for fmt in ("png", "pdf")],
+    targets=art.image_path('basic_plot'),
 )
 def basic_plot():
     """
@@ -89,7 +101,7 @@ def basic_plot():
     plt.text(-1200, 600, "$r^2=$%s"%np.round(d.r_value, 2))
     
     for fmt in 'png', 'pdf':
-        filepath = art.image_path(fmt, 'basic_plot')
+        filepath = art.image_path('basic_plot', fmt)
         plt.savefig(filepath)
 def main():
     """run task specified from command line"""
