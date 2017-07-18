@@ -182,10 +182,12 @@ class PyPanArtState(object):
 
         here = os.path.dirname(__file__)
         extra_fmt = {
-            'html': "--toc --mathjax --template %s/template/doc-setup/html.template" % here,
-            'pdf': "--template %s/template/doc-setup/manuscript.latex" % here,
+            'html': [
+                "--toc", "--mathjax",
+                "--template %s/template/doc-setup/html.template" % here,
+            ],
+            'pdf': ["--template %s/template/doc-setup/manuscript.latex" % here],
         }
-        extra = extra_fmt.get(fmt, "")
 
         def path_to_image(path, fmt):
             base = "build/"+("tmp/img/" if fmt == 'pdf' else "html/img/")
@@ -207,18 +209,12 @@ class PyPanArtState(object):
             out.write(template.render(X=X).encode('utf-8'))
             out.write('\n')
 
-        if self.bib:
-            bib = '--metadata bibliography="%s"' % self.bib
-        else:
-            bib = ''
+        cmd = ['pandoc', '--smart', '--standalone', '--from markdown-fancy_lists']
 
-        cmd = """pandoc
-           --smart --standalone
-           --filter pandoc-citeproc
-           {bib}
-           --from markdown-fancy_lists
-           {inc} {extra}
-           """
+        if self.bib:
+            cmd.append('--metadata bibliography="%s"' % self.bib)
+
+        cmd.extend(extra_fmt.get(fmt, []))
 
         filters = "/home/tbrown/.local/lib/python2.7/site-packages"
         if not os.path.exists(filters+"/pandoc_fignos.py"):
@@ -227,21 +223,23 @@ class PyPanArtState(object):
             filters = ""
         for filter_ in 'pandoc-fignos', 'pandoc-eqnos', 'pandoc-tablenos':
             filter_ = ("%s/%s.py" % (filters, filter_.replace('-', '_'))) if filters else filter_
-            cmd += '\n      --filter %s' % filter_
+            cmd.append('--filter %s' % filter_)
+
+        cmd.append('--filter pandoc-citeproc')  # after other filters
 
         # pass include files through template processor and add to cmd. line
         inc = ''
         for inc_i in [i for i in os.listdir('.') if i.endswith(inc_fmt[fmt])]:
-            inc += ' --include-in-header ' + inc_i.replace('.inc', '._inc')
+            cmd.append('--include-in-header ' + inc_i.replace('.inc', '._inc'))
             template = env.get_template(inc_i)
             with open(inc_i.replace('.inc', '._inc'), 'w') as out:
                 out.write(template.render(X=X, C=self.C).encode('utf-8'))
 
         # run pandoc
-        cmd += """ -o build/{fmt}/{basename}.{fmt} build/tmp/{basename}.{fmt}.md"""
-        cmd = cmd.format(filters=filters, bib=bib, inc=inc, fmt=fmt,
-            extra=extra, basename=self.basename)
-        print cmd
+        cmd.append("--output build/{fmt}/{basename}.{fmt} build/tmp/{basename}.{fmt}.md".format(
+            fmt=fmt, basename=self.basename))
+        print " \\\n    ".join(cmd)
+        cmd = ' '.join(cmd)
         make_dir("build/%s" % fmt)
         Popen(cmd.split()).wait()
 
