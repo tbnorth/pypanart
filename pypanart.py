@@ -68,7 +68,11 @@ class PyPanArtState(object):
         C._metadata.run.time = time.asctime()
         proc = Popen('git rev-parse HEAD'.split(), stdout=PIPE)
         commit, _ = proc.communicate()
-        C._metadata.run.commit = commit.strip()
+        proc = Popen('git diff-index HEAD --'.split(), stdout=PIPE)
+        mods, _ = proc.communicate()
+        mods = '+mods' if mods else ''
+        C._metadata.run.commit = commit.strip()+mods
+        C._metadata.run.commit_short = commit.strip()[:7]+mods
         C._metadata._filepath = state_file
 
         # doit inspects things looking for .create_doit_tasks and
@@ -167,17 +171,15 @@ class PyPanArtState(object):
             loader=jinja2.FileSystemLoader('.'),
             **JINJA_COMMON
         )
-        img_fmt = {
+        img_fmt = {  # image format for document formats
             'odt': 'png',
             'html': 'png',
             'pdf': 'pdf',
             'docx': 'png',
         }
-        inc_fmt = {
-            'odt': '.NA',
-            'html': '.css',
-            'pdf': '.inc',
-            'docx': '.NA',
+        inc_fmt = {  # include format for document formats
+            'html': 'css',
+            'pdf': 'inc',
         }
 
         here = os.path.dirname(__file__)
@@ -228,11 +230,14 @@ class PyPanArtState(object):
         cmd.append('--filter pandoc-citeproc')  # after other filters
 
         # pass include files through template processor and add to cmd. line
-        inc = ''
-        for inc_i in [i for i in os.listdir('.') if i.endswith(inc_fmt[fmt])]:
-            cmd.append('--include-in-header ' + inc_i.replace('.inc', '._inc'))
-            template = env.get_template(inc_i)
-            with open(inc_i.replace('.inc', '._inc'), 'w') as out:
+        ext = '.' + inc_fmt[fmt]
+        alt_ext = "._%s" % inc_fmt[fmt]
+        for inc_i in [i for i in os.listdir('doc-setup') if os.path.splitext(i)[-1].lower() == ext]:
+            tmp_file = os.path.splitext(inc_i)[0]+alt_ext
+            tmp_file = os.path.join('build', 'tmp', tmp_file)
+            cmd.append('--include-in-header ' + tmp_file)
+            template = env.get_template(os.path.join('doc-setup', inc_i))
+            with open(tmp_file, 'w') as out:
                 out.write(template.render(X=X, C=self.C).encode('utf-8'))
 
         # run pandoc
