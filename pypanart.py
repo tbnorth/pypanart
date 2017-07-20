@@ -186,13 +186,13 @@ class PyPanArtState(object):
         extra_fmt = {
             'html': [
                 "--toc", "--mathjax",
-                "--template %s/template/doc-setup/html.template" % here,
+                # "--template %s/template/doc-setup/html.template" % here,
             ],
             'pdf': ["--template %s/template/doc-setup/manuscript.latex" % here],
         }
 
         def path_to_image(path, fmt):
-            base = "build/"+("tmp/img/" if fmt == 'pdf' else "html/img/")
+            base = "build/tmp/img/" if fmt == 'pdf' else "img/"
             path = os.path.join(base, path)
             self.C.path = path
             if not os.path.exists(path):
