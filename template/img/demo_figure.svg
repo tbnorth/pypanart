@@ -8,13 +8,13 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="11in"
-   height="8.5in"
-   viewBox="0 0 3300.0001 2550.004"
+   width="29.361601in"
+   height="26.414616in"
+   viewBox="0 0 8808.4805 7924.3971"
    version="1.2"
    id="svg1840"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="pypanart_demo_figure.svg">
+   sodipodi:docname="demo_figure.svg">
   <metadata
      id="metadata2852">
     <rdf:RDF>
@@ -23,7 +23,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -36,18 +36,22 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1920"
-     inkscape:window-height="1043"
+     inkscape:window-width="1050"
+     inkscape:window-height="1596"
      id="namedview2850"
      showgrid="false"
      inkscape:zoom="0.86774635"
-     inkscape:cx="139.25085"
-     inkscape:cy="366.60584"
-     inkscape:window-x="1680"
-     inkscape:window-y="18"
-     inkscape:window-maximized="0"
+     inkscape:cx="1319.666"
+     inkscape:cy="732.46735"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
      inkscape:current-layer="g1846"
-     units="in" />
+     units="in"
+     fit-margin-top="10"
+     fit-margin-left="10"
+     fit-margin-right="10"
+     fit-margin-bottom="10" />
   <desc
      id="desc1842">Generated with Qt</desc>
   <defs
@@ -79,7 +83,7 @@
   <g
      id="g1846"
      style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-linejoin:bevel"
-     transform="translate(0,70.00396)">
+     transform="translate(2754.2442,2963.8674)">
     <g
        id="g6778"
        transform="translate(4.3272902e-5,-206.66701)">
@@ -194,8 +198,8 @@
              font-size="41.6667"
              transform="matrix(3.12422,0,0,3.12422,106.273,118.081)">
             <image
-               sodipodi:absref="/mnt/edata/edata/pypanart/template/img/base/base_img_demo.png"
-               xlink:href="base/base_img_demo.png"
+               sodipodi:absref="D:\repo\pypanart\template\img\base\base_img_demo.png"
+               xlink:href="base\base_img_demo.png"
                y="-0.029868685"
                x="-3.1081429"
                id="image4708"
@@ -3267,14 +3271,14 @@
              font-size="41.6667"
              transform="matrix(11.8081,0,0,11.8081,106.273,1653.13)" />
           <g
-             style="font-style:normal;font-weight:400;font-size:41.66669846px;font-family:Sans;fill:none;stroke:#00ffff;stroke-width:4.13386011;stroke-linecap:square;stroke-linejoin:bevel;stroke-opacity:1"
+             style="font-style:normal;font-weight:400;font-size:41.66669846px;font-family:Sans;fill:none;stroke:#00ffff;stroke-width:4.13386011;stroke-linecap:square;stroke-linejoin:miter;stroke-opacity:1"
              id="g2772"
              font-style="normal"
              font-weight="400"
              font-size="41.6667"
              transform="matrix(0.999751,0,0,0.999751,129.889,1794.83)">
             <path
-               style="fill-rule:evenodd"
+               style="fill-rule:evenodd;stroke-linejoin:miter"
                inkscape:connector-curvature="0"
                id="path2774"
                d="M 0,0 81,0 81,46 0,46 0,0"
@@ -3312,14 +3316,14 @@
              font-size="41.6667"
              transform="matrix(11.8081,0,0,11.8081,106.273,1653.13)" />
           <g
-             style="font-style:normal;font-weight:400;font-size:41.66669846px;font-family:Sans;fill:none;stroke:#aa55ff;stroke-width:5.90550995;stroke-linecap:square;stroke-linejoin:bevel;stroke-opacity:1"
+             style="font-style:normal;font-weight:400;font-size:41.66669846px;font-family:Sans;fill:none;stroke:#aa55ff;stroke-width:5.90550995;stroke-linecap:square;stroke-linejoin:miter;stroke-opacity:1"
              id="g2784"
              font-style="normal"
              font-weight="400"
              font-size="41.6667"
              transform="matrix(0.999751,0,0,0.999751,129.889,1889.29)">
             <path
-               style="fill-rule:evenodd"
+               style="fill-rule:evenodd;stroke-linejoin:miter"
                inkscape:connector-curvature="0"
                id="path2786"
                d="M 0,0 81,0 81,46 0,46 0,0"
@@ -3357,14 +3361,14 @@
              font-size="41.6667"
              transform="matrix(11.8081,0,0,11.8081,106.273,1653.13)" />
           <g
-             style="font-style:normal;font-weight:400;font-size:41.66669846px;font-family:Sans;fill:none;stroke:#55ff00;stroke-width:23.62199974;stroke-linecap:square;stroke-linejoin:bevel;stroke-opacity:1"
+             style="font-style:normal;font-weight:400;font-size:41.66669846px;font-family:Sans;fill:none;stroke:#55ff00;stroke-width:24.44119835;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
              id="g2796"
              font-style="normal"
              font-weight="400"
              font-size="41.6667"
              transform="matrix(0.999751,0,0,0.999751,129.889,1983.76)">
             <path
-               style="fill-rule:evenodd"
+               style="fill-rule:evenodd;stroke-width:24.44119835;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none"
                inkscape:connector-curvature="0"
                id="path2798"
                d="M 0,0 81,0 81,46 0,46 0,0"
@@ -3402,14 +3406,14 @@
              font-size="41.6667"
              transform="matrix(11.8081,0,0,11.8081,106.273,1653.13)" />
           <g
-             style="font-style:normal;font-weight:400;font-size:41.66669846px;font-family:Sans;fill:none;stroke:#ffff00;stroke-width:35.43310165;stroke-linecap:square;stroke-linejoin:bevel;stroke-opacity:1"
+             style="font-style:normal;font-weight:400;font-size:41.66669846px;font-family:Sans;fill:none;stroke:#ffff00;stroke-width:24.44119835;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
              id="g2808"
              font-style="normal"
              font-weight="400"
              font-size="41.6667"
              transform="matrix(0.999751,0,0,0.999751,129.889,2078.22)">
             <path
-               style="fill-rule:evenodd"
+               style="fill-rule:evenodd;stroke-width:24.44119835;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none"
                inkscape:connector-curvature="0"
                id="path2810"
                d="M 0,0 81,0 81,46 0,46 0,0"
@@ -3497,7 +3501,7 @@
              height="92.796135"
              width="125.76389"
              id="rect3028"
-             style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;color-interpolation:sRGB;color-interpolation-filters:linearRGB;fill:#757575;fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:2.84694409;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:22.77555352, 22.77555352;stroke-dashoffset:0;stroke-opacity:1;marker:none;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate" />
+             style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;color-interpolation:sRGB;color-interpolation-filters:linearRGB;fill:#757575;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.84694409;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:22.77555352, 22.77555352;stroke-dashoffset:0;stroke-opacity:1;marker:none;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate" />
           <g
              style="font-style:normal;font-weight:400;font-size:41.66669846px;font-family:Sans;fill:none;stroke:#ffffff;stroke-width:11.81099987;stroke-linecap:square;stroke-linejoin:bevel;stroke-opacity:1"
              id="g2832"
@@ -3506,7 +3510,7 @@
              font-size="41.6667"
              transform="matrix(0.999751,0,0,0.999751,129.889,2267.15)">
             <path
-               style="fill-rule:evenodd"
+               style="fill-rule:evenodd;stroke-width:11.80917263;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none"
                inkscape:connector-curvature="0"
                id="path2834"
                d="M 0,0 81,0 81,46 0,46 0,0"
@@ -3576,48 +3580,12 @@
     <flowRoot
        xml:space="preserve"
        id="flowRoot7290"
-       style="fill:black;stroke:none;stroke-opacity:1;stroke-width:1px;stroke-linejoin:miter;stroke-linecap:butt;fill-opacity:1;font-family:sans-serif;font-style:normal;font-weight:normal;font-size:40px;line-height:125%;letter-spacing:0px;word-spacing:0px"><flowRegion
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"><flowRegion
          id="flowRegion7292"><rect
            id="rect7294"
            width="905.79468"
            height="125.61275"
            x="36.877136"
            y="637.08246" /></flowRegion><flowPara
-         id="flowPara7296" /></flowRoot>    <flowRoot
-       transform="matrix(3.3333382,0,0,3.3333385,219.39239,-153.96881)"
-       xml:space="preserve"
-       id="flowRoot7298"
-       style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"><flowRegion
-         id="flowRegion7300"><rect
-           id="rect7302"
-           width="913.86145"
-           height="133.67958"
-           x="42.639187"
-           y="645.14929" /></flowRegion><flowPara
-         id="flowPara7304"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:20px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'">PyPanArt example figure:</flowPara><flowPara
-         style="font-size:20px"
-         id="flowPara7306">The SVG part of this image is saved as <flowSpan
-   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'Courier New';-inkscape-font-specification:'Courier New Bold'"
-   id="flowSpan7337">img/demo_figure.svg.</flowSpan></flowPara><flowPara
-         style="font-size:20px"
-         id="flowPara7335"><flowSpan
-   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'Courier New';-inkscape-font-specification:'Courier New Bold'"
-   id="flowSpan4667">img/demo_figure.png</flowSpan> and <flowSpan
-   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'Courier New';-inkscape-font-specification:'Courier New'"
-   id="flowSpan7341">img/demo_figure.pdf</flowSpan> are made by the <flowSpan
-   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'Courier New';-inkscape-font-specification:'Courier New'"
-   id="flowSpan7367">img</flowSpan> task.</flowPara><flowPara
-         style="font-size:20px"
-         id="flowPara4679">The background image is saved as <flowSpan
-   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'Courier New';-inkscape-font-specification:'Courier New'"
-   id="flowSpan7347">img/base/base_img_demo.png</flowSpan>, so that</flowPara><flowPara
-         style="font-size:20px"
-         id="flowPara4684"><flowSpan
-   style="-inkscape-font-specification:'sans-serif Italic';font-family:sans-serif;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal"
-   id="flowSpan4688">git</flowSpan> can ignore <flowSpan
-   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'Courier New';-inkscape-font-specification:'Courier New'"
-   id="flowSpan7349">img/*.png</flowSpan> (and <flowSpan
-   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'Courier New';-inkscape-font-specification:'Courier New'"
-   id="flowSpan7351">img/*.pdf</flowSpan>).</flowPara></flowRoot>  </g>
+         id="flowPara7296" /></flowRoot>  </g>
 </svg>
