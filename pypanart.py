@@ -232,11 +232,15 @@ class PyPanArtState(object):
         # pass include files through template processor and add to cmd. line
         ext = '.' + inc_fmt[fmt]
         alt_ext = "._%s" % inc_fmt[fmt]
-        for inc_i in [i for i in os.listdir('doc-setup') if os.path.splitext(i)[-1].lower() == ext]:
+        includes = [
+            i for i in os.listdir('doc-setup')
+            if os.path.splitext(i)[-1].lower() == ext
+        ]
+        for inc_i in includes:
             tmp_file = os.path.splitext(inc_i)[0]+alt_ext
             tmp_file = os.path.join('build', 'tmp', tmp_file)
             cmd.append('--include-in-header ' + tmp_file)
-            template = env.get_template(os.path.join('doc-setup', inc_i))
+            template = env.get_template('doc-setup/'+inc_i)  # don't use os.path.join()
             with open(tmp_file, 'w') as out:
                 out.write(template.render(X=X, C=self.C).encode('utf-8'))
 
