@@ -393,7 +393,8 @@ def run_task(module, task):
     :param module module: module containing tasks
     :param str task: task to run
     """
-    print 'module'
+    start = time.time()
     DoitMain(ModuleTaskLoader(module)).run([task])
+    print("%.2f seconds" % (time.time()-start))
 
 
