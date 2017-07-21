@@ -4,9 +4,15 @@ author:
 - affilnum: 1
   email: terrynbrown@gmail.com
   name: Terry N. Brown
+  corresponding: True
+- affilnum: 2
+  email: notthis@gmail.com
+  name: Other Author
 affiliation:
 - affil: Undetermined
   affilnum: 1
+- affil: Unrequired
+  affilnum: 2
 output:
   html_document: null
   pdf_document:

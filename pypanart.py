@@ -125,8 +125,8 @@ class PyPanArtState(object):
     def make_data_collector(self):
         """collect_data - collect data from original file system locations"""
         for name, sources in self.data_sources.items():
-            print name
-            print sources
+            print(name)
+            print(sources)
 
             sources = sources.split(':TYPE:')[0]  # used to manage shapefiles, not here
             sources = glob(os.path.splitext(sources)[0]+'*')
@@ -141,7 +141,7 @@ class PyPanArtState(object):
                         (shutil.copy, (source, target)),
                     ],
                 }
-                print task
+                print(task)
                 yield task
 
     def make_data_loader(self):
@@ -183,10 +183,11 @@ class PyPanArtState(object):
         }
 
         here = os.path.dirname(__file__)
+        # FIXME look for user's modified version first
         extra_fmt = {
             'html': [
                 "--toc", "--mathjax",
-                # "--template %s/template/doc-setup/html.template" % here,
+                "--template %s/template/doc-setup/html.template" % here,
             ],
             'pdf': ["--template %s/template/doc-setup/manuscript.latex" % here],
         }
@@ -247,7 +248,7 @@ class PyPanArtState(object):
         # run pandoc
         cmd.append("--output build/{fmt}/{basename}.{fmt} build/tmp/{basename}.{fmt}.md".format(
             fmt=fmt, basename=self.basename))
-        print " \\\n    ".join(cmd)
+        print(" \\\n    ".join(cmd))
         cmd = ' '.join(cmd)
         make_dir("build/%s" % fmt)
         Popen(cmd.split()).wait()
@@ -346,7 +347,7 @@ class PyPanArtState(object):
             if kwargs['active']:
                 del kwargs['active']
             else:
-                return lambda(function): None
+                return lambda function: None
         if 'targets' in kwargs:
             self.D.all_outputs.extend(kwargs['targets'])
         def one_task_maker(function):
@@ -357,7 +358,6 @@ class PyPanArtState(object):
             function_task.create_doit_tasks = function_task
             return function_task
         return one_task_maker
-
     def run_with_context(self, func):
         """Run func(), ensuring any changes to C are saved
 

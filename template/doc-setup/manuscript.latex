@@ -226,7 +226,7 @@ $endif$
 \large
 $for(author)$
 $if(author.name)$
-$author.name$$if(author.affilnum)$$if(author.email)$ \textsuperscript{*}$endif$ \textsuperscript{$author.affilnum$} $endif$
+$author.name$$if(author.corresponding)$$if(author.email)$ \textsuperscript{*}$endif$ \textsuperscript{$author.affilnum$} $endif$
 $else$
 $author$
 $endif$
