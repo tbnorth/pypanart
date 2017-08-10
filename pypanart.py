@@ -202,6 +202,17 @@ class PyPanArtState(object):
                 print("WARNING: '%s' does not exist" % path)
             return path
 
+        # copy files from build/html/img to build/tmp/img in case
+        # other formats need them
+        for path, dirs, files in os.walk("build/html/img"):
+            for filename in files:
+                filepath = os.path.join(path, filename)
+                tmp_path = os.path.join(
+                    "build/tmp/img",
+                    os.path.relpath(filepath, start="build/html/img")
+                )
+                shutil.copyfile(filepath, tmp_path)
+
         env.filters['img'] = lambda path, fmt=fmt: path_to_image(path, fmt)
 
         template = env.get_template('build/tmp/%s.md' % self.basename)
@@ -279,7 +290,12 @@ class PyPanArtState(object):
             }
 
     def make_images(self):
-        """make png / pdf figures from svg sources"""
+        """make png / pdf figures from svg sources
+
+        NOTE: files made / copied to build/html/img will be copied to build/tmp/img
+        lated (currently in make_fmt()) to make them available for other formats
+        like .odt.
+        """
         inkscape = 'inkscape'
         if sys.platform == 'win32':
             inkscape = r'"C:\Program Files\Inkscape\inkscape.exe"'
@@ -301,30 +317,9 @@ class PyPanArtState(object):
                             'file_dep': [src],
                             'targets': [out],
                         }
-                        if format == 'png':
-                            out2 = os.path.join('build/tmp', path, filename[:-4]+'.png')
-                            yield {
-                                'name': "%s copy to %s" % (out, out2),
-                                'actions': [
-                                    (make_dir, (os.path.dirname(out2),)),
-                                    (shutil.copyfile, (out, out2)),
-                                ],
-                                'file_dep': [out],
-                                'targets': [out2],
-                            }
                 else:
                     src = os.path.join(path, filename)
                     out = os.path.join('build/html', path, filename)
-                    yield {
-                        'name': "%s from %s" % (out, src),
-                        'actions': [
-                            (make_dir, (os.path.dirname(out),)),
-                            (shutil.copyfile, (src, out)),
-                        ],
-                        'file_dep': [src],
-                        'targets': [out],
-                    }
-                    out = os.path.join('build/tmp', path, filename)
                     yield {
                         'name': "%s from %s" % (out, src),
                         'actions': [
