@@ -44,7 +44,7 @@ $if(subtitle)$
 <h1 class="subtitle">$subtitle$</h1>
 $endif$
 
-$for(author)$$if(author.name)$$author.name$$if(author.corresponding)$<sup>*</sup>$endif$$if(author.affilnum)$<sup>$author.affilnum$</sup>$endif$$else$$author$$endif$$sep$, $endfor$
+$for(author)$$if(author.name)$$author.name$$if(author.affilnum)$<sup>$author.affilnum$</sup>$endif$$if(author.corresponding)$<sup>*</sup>$endif$$else$$author$$endif$$sep$, $endfor$
 
 $for(affiliation)$
 <div><sup>$affiliation.affilnum$</sup>$affiliation.affil$</div>

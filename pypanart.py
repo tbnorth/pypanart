@@ -184,12 +184,14 @@ class PyPanArtState(object):
 
         here = os.path.dirname(__file__)
         # FIXME look for user's modified version first
+        # FIXME use generic --template <format_name>.template
         extra_fmt = {
             'html': [
                 "--toc", "--mathjax",
                 "--template %s/template/doc-setup/html.template" % here,
             ],
             'pdf': ["--template %s/template/doc-setup/manuscript.latex" % here],
+            'odt': ["--template %s/template/doc-setup/odt.template" % here],
         }
 
         def path_to_image(path, fmt):
