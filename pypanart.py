@@ -193,7 +193,7 @@ class PyPanArtState(object):
         }
 
         def path_to_image(path, fmt):
-            base = "build/tmp/img/" if fmt == 'pdf' else "img/"
+            base = "img/" if fmt == 'html' else "build/tmp/img/"
             path = os.path.join(base, path)
             self.C.path = path
             if not os.path.exists(path):
@@ -231,19 +231,20 @@ class PyPanArtState(object):
         cmd.append('--filter pandoc-citeproc')  # after other filters
 
         # pass include files through template processor and add to cmd. line
-        ext = '.' + inc_fmt[fmt]
-        alt_ext = "._%s" % inc_fmt[fmt]
-        includes = [
-            i for i in os.listdir('doc-setup')
-            if os.path.splitext(i)[-1].lower() == ext
-        ]
-        for inc_i in includes:
-            tmp_file = os.path.splitext(inc_i)[0]+alt_ext
-            tmp_file = os.path.join('build', 'tmp', tmp_file)
-            cmd.append('--include-in-header ' + tmp_file)
-            template = env.get_template('doc-setup/'+inc_i)  # don't use os.path.join()
-            with open(tmp_file, 'w') as out:
-                out.write(template.render(X=X, C=self.C).encode('utf-8'))
+        if fmt in inc_fmt:
+            ext = '.' + inc_fmt[fmt]
+            alt_ext = "._%s" % inc_fmt[fmt]
+            includes = [
+                i for i in os.listdir('doc-setup')
+                if os.path.splitext(i)[-1].lower() == ext
+            ]
+            for inc_i in includes:
+                tmp_file = os.path.splitext(inc_i)[0]+alt_ext
+                tmp_file = os.path.join('build', 'tmp', tmp_file)
+                cmd.append('--include-in-header ' + tmp_file)
+                template = env.get_template('doc-setup/'+inc_i)  # don't use os.path.join()
+                with open(tmp_file, 'w') as out:
+                    out.write(template.render(X=X, C=self.C).encode('utf-8'))
 
         # run pandoc
         cmd.append("--output build/{fmt}/{basename}.{fmt} build/tmp/{basename}.{fmt}.md".format(
@@ -300,6 +301,17 @@ class PyPanArtState(object):
                             'file_dep': [src],
                             'targets': [out],
                         }
+                        if format == 'png':
+                            out2 = os.path.join('build/tmp', path, filename[:-4]+'.png')
+                            yield {
+                                'name': "%s copy to %s" % (out, out2),
+                                'actions': [
+                                    (make_dir, (os.path.dirname(out2),)),
+                                    (shutil.copyfile, (out, out2)),
+                                ],
+                                'file_dep': [out],
+                                'targets': [out2],
+                            }
                 else:
                     src = os.path.join(path, filename)
                     out = os.path.join('build/html', path, filename)
@@ -312,7 +324,16 @@ class PyPanArtState(object):
                         'file_dep': [src],
                         'targets': [out],
                     }
-
+                    out = os.path.join('build/tmp', path, filename)
+                    yield {
+                        'name': "%s from %s" % (out, src),
+                        'actions': [
+                            (make_dir, (os.path.dirname(out),)),
+                            (shutil.copyfile, (src, out)),
+                        ],
+                        'file_dep': [src],
+                        'targets': [out],
+                    }
     def make_markdown(self):
         """make_markdown - make markdown
         """
