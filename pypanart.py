@@ -191,7 +191,10 @@ class PyPanArtState(object):
                 "--template %s/template/doc-setup/html.template" % here,
             ],
             'pdf': ["--template %s/template/doc-setup/manuscript.latex" % here],
-            'odt': ["--template %s/template/doc-setup/odt.template" % here],
+            'odt': [
+                "--template %s/template/doc-setup/odt.template" % here,
+                "--reference-odt %s/template/doc-setup/odt.reference" % here,
+            ],
         }
 
         def path_to_image(path, fmt):

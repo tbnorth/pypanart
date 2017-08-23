@@ -15,10 +15,10 @@ $if(title)$
 <text:p text:style-name="Title">$title$</text:p>
 $endif$
 
-$for(author)$<text:p text:style-name="Author">$if(author.name)$$author.name$$if(author.affilnum)$$author.affilnum$$endif$$if(author.corresponding)$*$endif$$else$$author$$endif$</text:p>$sep$, $endfor$
+$for(author)$<text:p text:style-name="Author">$if(author.name)$$author.name$$if(author.affilnum)$<text:span text:style-name="Superscript">$author.affilnum$</text:span>$endif$$if(author.corresponding)$*$endif$$else$$author$$endif$</text:p>$sep$, $endfor$
 
 $for(affiliation)$
-<text:p>$affiliation.affilnum$$affiliation.affil$</text:p>
+<text:p><text:span text:style-name="Superscript">$affiliation.affilnum$</text:span>$affiliation.affil$</text:p>
 $endfor$
 
 $for(author)$
