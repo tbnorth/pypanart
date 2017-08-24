@@ -24,5 +24,5 @@
 \renewcommand{\headrulewidth}{0.0pt}
 \fancyfoot[CO,CE]{\tiny {{C._metadata.run.time}}}
 \fancyfoot[RE,RO]{\thepage}
-\fancyfoot[LE,LO]{\tiny DRAFT {{C._metadata.run.commit_short}}}
+\fancyfoot[LE,LO]{\tiny {{C._metadata.status}} {{C._metadata.run.commit_short}}}
 \fancypagestyle{plain}{\thispagestyle{fancy}}

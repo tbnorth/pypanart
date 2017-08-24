@@ -2,6 +2,7 @@ import os
 import json
 import shutil
 import sys
+import tempfile
 import time
 from glob import glob
 from subprocess import Popen, PIPE
@@ -74,6 +75,7 @@ class PyPanArtState(object):
         C._metadata.run.commit = commit.strip()+mods
         C._metadata.run.commit_short = commit.strip()[:7]+mods
         C._metadata._filepath = state_file
+        C._metadata.status = 'DRAFT'
 
         # doit inspects things looking for .create_doit_tasks and
         # failes when C and D return {}, so add dummy method
@@ -182,6 +184,11 @@ class PyPanArtState(object):
             'pdf': 'inc',
         }
 
+        if fmt == 'odt':
+            odt_file = self.preprocess_odt()
+        else:
+            odt_file = ''
+
         here = os.path.dirname(__file__)
         # FIXME look for user's modified version first
         # FIXME use generic --template <format_name>.template
@@ -193,7 +200,7 @@ class PyPanArtState(object):
             'pdf': ["--template %s/template/doc-setup/manuscript.latex" % here],
             'odt': [
                 "--template %s/template/doc-setup/odt.template" % here,
-                "--reference-odt %s/template/doc-setup/odt.reference" % here,
+                "--reference-odt %s" % odt_file,
             ],
         }
 
@@ -379,6 +386,35 @@ class PyPanArtState(object):
             function_task.create_doit_tasks = function_task
             return function_task
         return one_task_maker
+    def preprocess_odt(self):
+        """preprocess_odt - process reference ODT file for footer includes
+        etc."""
+        # extract the reference ODT
+        odt_dir = tempfile.mkdtemp()
+        here = os.path.dirname(__file__)
+        # FIXME look for user's modified version first
+        cmd = ['unzip', '%s/template/doc-setup/odt.reference' % here]
+        Popen(cmd, cwd=odt_dir).wait()
+
+        # run template substitution on it
+        env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader('/'),
+            **JINJA_COMMON
+        )
+        styles_old = os.path.join(odt_dir, 'styles.xml')
+        styles_new = os.path.join(odt_dir, 'styles_new.xml')
+        template = env.get_template(styles_old)
+        with open(styles_new, 'w') as out:
+            out.write(template.render(C=self.C).encode('utf-8'))
+        shutil.copyfile(styles_new, styles_old)
+
+        # zip it up again
+        zip_file = os.path.join(odt_dir, 'reference.odt')
+        cmd = ['zip', '-r', zip_file, '.', '-i', '*']
+        Popen(cmd, cwd=odt_dir).wait()
+
+        return zip_file
+
     def run_with_context(self, func):
         """Run func(), ensuring any changes to C are saved
 
