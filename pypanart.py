@@ -4,6 +4,8 @@ import shutil
 import sys
 import tempfile
 import time
+import zipfile
+
 from glob import glob
 from subprocess import Popen, PIPE
 
@@ -393,27 +395,37 @@ class PyPanArtState(object):
         odt_dir = tempfile.mkdtemp()
         here = os.path.dirname(__file__)
         # FIXME look for user's modified version first
-        cmd = ['unzip', '%s/template/doc-setup/odt.reference' % here]
-        Popen(cmd, cwd=odt_dir).wait()
+        zipfile.ZipFile('%s/template/doc-setup/odt.reference' % here).extractall(odt_dir)
 
         # run template substitution on it
-        env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader('/'),
-            **JINJA_COMMON
-        )
+        # not sure how to instanciate jinja2.FileSystemLoader from filesystem
+        # root for Windows, so use DictLoader
         styles_old = os.path.join(odt_dir, 'styles.xml')
         styles_new = os.path.join(odt_dir, 'styles_new.xml')
-        template = env.get_template(styles_old)
+        template_dict = {'styles': open(styles_old).read().decode('utf-8')}
+        env = jinja2.Environment(
+            loader=jinja2.DictLoader(template_dict),
+            **JINJA_COMMON
+        )
+        template = env.get_template('styles')
         with open(styles_new, 'w') as out:
             out.write(template.render(C=self.C).encode('utf-8'))
         shutil.copyfile(styles_new, styles_old)
 
         # zip it up again
-        zip_file = os.path.join(odt_dir, 'reference.odt')
-        cmd = ['zip', '-r', zip_file, '.', '-i', '*']
-        Popen(cmd, cwd=odt_dir).wait()
+        zip_filepath = os.path.join(odt_dir, 'reference.odt')
+        zip_file = zipfile.ZipFile(zip_filepath, 'w')
+        for path, dirs, files in os.walk(odt_dir):
+            for filename in files:
+                if filename == 'reference.odt':
+                    continue
+                zip_file.write(
+                    os.path.join(path, filename),
+                    os.path.relpath(os.path.join(path, filename), odt_dir)
+                )
+        zip_file.close()
 
-        return zip_file
+        return zip_filepath
 
     def run_with_context(self, func):
         """Run func(), ensuring any changes to C are saved

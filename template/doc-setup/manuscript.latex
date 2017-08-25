@@ -213,7 +213,7 @@ $header-includes$
 $endfor$
 
 \begin{document}
-%%Edited by @jhollist 09/15/2014
+%%Edited by @jhollist 09/15/2014, @tbnorth 20170825
 %%Adds title from YAML
 \begin{singlespace}
 $if(title)$
@@ -226,15 +226,11 @@ $endif$
 \large
 $for(author)$
 $if(author.name)$
-$author.name$$if(author.corresponding)$$if(author.email)$ \textsuperscript{*}$endif$ \textsuperscript{$author.affilnum$} $endif$
-$else$
-$author$
-$endif$
-$endfor$
+$author.name$$if(author.corresponding)$$if(author.email)$\textsuperscript{*}$endif$$endif$\textsuperscript{$author.affilnum$}$else$$author$$endif$$sep$, $endfor$
 \end{center}
 %%Adds affiliations from YAML
 \begin{justify}
-\footnotesize \emph{ 
+\footnotesize \emph{
 $for(affiliation)$
 \\*
 \textsuperscript{$affiliation.affilnum$}$affiliation.affil$\\*
@@ -246,9 +242,9 @@ $endfor$
 \\[0.1cm]
 \footnotesize \emph{ 
 $for(author)$
-$if(author.email)$
+$if(author.corresponding)$
 \ifnum\value{num}=1%
-\textsuperscript{*} corresponding author:
+\textsuperscript{*}corresponding author:
 \fi
 $author.email$
 \stepcounter{num}
