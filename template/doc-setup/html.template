@@ -56,6 +56,10 @@ $if(author.corresponding)$$if(author.email)$
 $endif$$endif$
 $endfor$
 
+$if(abstract)$
+<p>$abstract$</p>
+$endif$
+
 $if(date)$
 <h3 class="date">$date$</h3>
 $endif$
