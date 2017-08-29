@@ -17,10 +17,6 @@ $endif$
 
 $for(author)$<text:p text:style-name="Author">$if(author.name)$$author.name$$if(author.affilnum)$<text:span text:style-name="Superscript">$author.affilnum$</text:span>$endif$$if(author.corresponding)$*$endif$$else$$author$$endif$</text:p>$sep$, $endfor$
 
-<text:p>Abs:
-$abstract$
-</text:p>
-
 $for(affiliation)$
 <text:p><text:span text:style-name="Superscript">$affiliation.affilnum$</text:span>$affiliation.affil$</text:p>
 $endfor$
@@ -30,6 +26,15 @@ $if(author.corresponding)$$if(author.email)$
 <text:p>* corresponding author: $author.email$</text:p>
 $endif$$endif$
 $endfor$
+
+<!-- something odd here, dollar-abstract-dollar comes pre-wrapped in a text:p
+     element, so wrapping it again creates a nested element text:p, which is
+     apparently not allowed, it doesn't doens't display.  So accept default
+     styling for abstract -->
+$if(abstract)$
+<text:p text:style-name="Heading_20_2">Abstract</text:p>
+$abstract$
+$endif$
 
 $if(date)$
 <text:p text:style-name="Date">$date$</text:p>
