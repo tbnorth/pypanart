@@ -23,7 +23,7 @@ $endfor$
 
 $for(author)$
 $if(author.corresponding)$$if(author.email)$
-<text:p>* corresponding author: $author.email$</text:p>
+<text:p>* corresponding author: <text:a xlink:type="simple" xlink:href="mailto:$author.email$">$author.email$</text:a></text:p>
 $endif$$endif$
 $endfor$
 
