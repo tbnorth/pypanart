@@ -1,5 +1,6 @@
-import os
+import ast
 import json
+import os
 import shutil
 import sys
 import tempfile
@@ -228,6 +229,7 @@ class PyPanArtState(object):
                 shutil.copyfile(filepath, tmp_path)
 
         env.filters['img'] = lambda path, fmt=fmt: path_to_image(path, fmt)
+        env.filters['code'] = get_code_filter
 
         template = env.get_template('build/tmp/%s.md' % self.basename)
         X = {
@@ -353,6 +355,8 @@ class PyPanArtState(object):
         )
 
         env.filters['img'] = lambda path: "{{'%s'|img}}" % path
+        env.filters['code'] = get_code_filter
+
         X = {
             'fmt': '{{X.fmt}}',
             'now': time.asctime(),
@@ -467,3 +471,66 @@ def run_task(module, task):
     print("%.2f seconds" % (time.time()-start))
 
 
+
+def get_lines(tree, name):
+    """
+    get_lines - Get the lines defining name in source
+
+    :param ast.AST tree: AST tree of source
+    :param srt name: name of function or assignment
+    :return: start, end
+    :rtype: (int, int)
+    """
+    childs = getattr(tree, 'body', [])
+    linenos = [getattr(i, 'lineno', None) for i in childs]
+
+    # function and class definitions
+    names = [getattr(i, 'name', None) for i in childs]
+    if name in names:
+        idx = names.index(name)
+        end = linenos[idx+1] if idx < len(linenos) - 1 else None
+        return linenos[idx], end
+
+    # assignments
+    targets = [getattr(i, 'targets', []) for i in childs]
+    names = [[getattr(i, 'id', None) for i in j] for j in targets]
+    for idx, name_list in enumerate(names):
+        if name in name_list:
+            return linenos[idx], linenos[idx]+1
+
+    for child in childs:
+        start, end = get_lines(child, name)
+        if start:
+            return start, end
+    return None, None
+
+def get_code(source, name):
+    """get_code - get the lines of code from source that define name
+
+    :param str source: path to .py file
+    :param str name: name to look for
+    :return: code
+    :rtype: str
+    """
+
+    text = open(source).read()
+    tree = ast.parse(text)
+    text = text.split('\n')
+
+    start, end = get_lines(tree, name)
+    if not start:
+        return "FAIL: DID NOT FIND '%s' IN '%s'" % (name, source)
+    if end is None:
+        end = len(text)+1  # AstNode.lineno is 1 based
+    return '\n'.join(text[start-1:end-1])
+
+def get_code_filter(source_name):
+    """get_code_filter - Jinja filter interface to get_code()
+
+    :param str source_name: whitespace separated string "sourcefile.py name"
+    :return: code
+    :rtype: str
+    """
+
+    source, name = source_name.split()
+    return get_code(source, name)

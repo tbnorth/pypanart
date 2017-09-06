@@ -10,3 +10,11 @@ made by the img task. The background image is saved in the special
 images in folders other than `base` to build/html/img.
 ]({{'demo_figure'|img}}){#fig:demo_figure}
 
+
+`{{'{{"{{"}}'}}"../pypanart.py get_code"|code}}`
+
+
+```python
+{{"../pypanart.py get_code"|code}}
+```
+
