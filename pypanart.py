@@ -236,7 +236,7 @@ class PyPanArtState(object):
             'fmt': img_fmt[fmt],
         }
         with open('build/tmp/%s.%s.md' % (self.basename, fmt), 'w') as out:
-            out.write(template.render(X=X).encode('utf-8'))
+            out.write(template.render(X=X, dcb='{{').encode('utf-8'))
             out.write('\n')
 
         cmd = ['pandoc', '--smart', '--standalone', '--from markdown-fancy_lists']
@@ -271,7 +271,7 @@ class PyPanArtState(object):
                 cmd.append('--include-in-header ' + tmp_file)
                 template = env.get_template('doc-setup/'+inc_i)  # don't use os.path.join()
                 with open(tmp_file, 'w') as out:
-                    out.write(template.render(X=X, C=self.C).encode('utf-8'))
+                    out.write(template.render(X=X, C=self.C, dcb='{{').encode('utf-8'))
 
         # run pandoc
         cmd.append("--output build/{fmt}/{basename}.{fmt} build/tmp/{basename}.{fmt}.md".format(
@@ -366,7 +366,7 @@ class PyPanArtState(object):
         with open('build/tmp/%s.md' % self.basename, 'w') as out:
             for part in self.parts:
                 template = env.get_template(os.path.basename(part+'.md'))
-                out.write(template.render(C=self.C, X=X).encode('utf-8'))
+                out.write(template.render(C=self.C, X=X, dcb='{{dcb}}').encode('utf-8'))
                 out.write('\n\n')
 
     def one_task(self, **kwargs):
@@ -496,7 +496,8 @@ def get_lines(tree, name):
     names = [[getattr(i, 'id', None) for i in j] for j in targets]
     for idx, name_list in enumerate(names):
         if name in name_list:
-            return linenos[idx], linenos[idx]+1
+            end = linenos[idx+1] if idx < len(linenos) - 1 else None
+            return linenos[idx], end
 
     for child in childs:
         start, end = get_lines(child, name)
@@ -505,7 +506,7 @@ def get_lines(tree, name):
     return None, None
 
 def get_code(source, name):
-    """get_code - get the lines of code from source that define name
+    """get_code - get the lines of code from source that defines name
 
     :param str source: path to .py file
     :param str name: name to look for

@@ -11,10 +11,18 @@ images in folders other than `base` to build/html/img.
 ]({{'demo_figure'|img}}){#fig:demo_figure}
 
 
-`{{'{{"{{"}}'}}"../pypanart.py get_code"|code}}`
+`{{dcb}}"../pypanart.py get_code"|code}}`
 
 
 ```python
 {{"../pypanart.py get_code"|code}}
+```
+
+```python
+{{"../pypanart.py JINJA_COMMON"|code}}
+```
+
+```python
+{{"../pypanart.py preprocess_odt"|code}}
 ```
 
