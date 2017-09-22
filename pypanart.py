@@ -40,9 +40,9 @@ class PyPanArtState(object):
         """
         self.basename = basename
         self.data_sources = data_sources
-        self.data_dir = "build/DATA"
+        self.data_dir = os.path.join("build", "DATA")
         self.parts = parts
-        self.statefile = 'build/' + self.basename + '.state.json'
+        self.statefile = os.path.join('build', self.basename + '.state.json')
         self.C, self.D = self._get_context_objects(self.statefile)
         self.D.all_inputs = []
         self.D.all_outputs = []
@@ -100,7 +100,14 @@ class PyPanArtState(object):
         if item is not None:
             return os.path.join(self.data_dir, name, item)
         else:
-            return os.path.join(self.data_dir, name, os.path.basename(self.data_sources[name]))
+            if isinstance(self.data_sources[name], list):
+                basename = self.data_sources[name][0]
+            else:
+                basename = self.data_sources[name]
+            # can't use os.path.basename, first path might be for
+            # different OS
+            basename = basename.replace('\\', '/').split('/')[-1]
+            return os.path.join(self.data_dir, name, basename)
 
     def get_C_D(self):
         """get_C_D - get persistent and runtime shared state containers
@@ -134,35 +141,42 @@ class PyPanArtState(object):
     def make_data_collector(self):
         """collect_data - collect data from original file system locations"""
         for name, sources in self.data_sources.items():
-            sources = sources.split(':TYPE:')[0]  # used to manage shapefiles, not here
             sub_path = os.path.join(self.data_dir, name)
 
-            if sources.lower().split('://', 1)[0] in ('http', 'https', 'ftp'):
-                # SINGLE FILE remote targets
-                target = os.path.join(sub_path, sources.split('/')[-1])
-                action = "curl -o '%s' %s" % (target, sources)
-                if not os.path.exists(target):
-                    yield {
-                        'name': 'curl '+target, 'targets': [target],
-                        'actions': [
-                            (make_dir, (sub_path,)),
-                            action,
-                        ],
-                    }
+            if isinstance(sources, list):
+                source_list = sources
             else:
-                sources = glob(os.path.splitext(sources)[0]+'*')
-                targets = [os.path.join(sub_path, os.path.basename(source))
-                           for source in sources]
-                for source, target in zip(sources, targets):
-                    task = {
-                        'name': name+target, 'file_dep': [source], 'targets': [target],
-                        'actions': [
-                            (make_dir, (sub_path,)),
-                            (shutil.copy, (source, target)),
-                        ],
-                    }
-                    print(task)
-                    yield task
+                source_list = [sources]
+
+            for sources in source_list:
+
+                sources = sources.split(':TYPE:')[0]  # used to manage shapefiles, not here
+
+                if sources.lower().split('://', 1)[0] in ('http', 'https', 'ftp'):
+                    # SINGLE FILE remote targets
+                    target = os.path.join(sub_path, sources.split('/')[-1])
+                    action = 'curl -o "%s" %s' % (target, sources)
+                    if not os.path.exists(target):
+                        yield {
+                            'name': 'curl '+target, 'targets': [target],
+                            'actions': [
+                                (make_dir, (sub_path,)),
+                                action,
+                            ],
+                        }
+                else:
+                    sources = glob(os.path.splitext(sources)[0]+'*')
+                    targets = [os.path.join(sub_path, os.path.basename(source))
+                               for source in sources]
+                    for source, target in zip(sources, targets):
+                        task = {
+                            'name': name+target, 'file_dep': [source], 'targets': [target],
+                            'actions': [
+                                (make_dir, (sub_path,)),
+                                (shutil.copy, (source, target)),
+                            ],
+                        }
+                        yield task
     def make_data_loader(self):
         """load_data - load global data for other tasks"""
         def load_global(name, D=self.D):
