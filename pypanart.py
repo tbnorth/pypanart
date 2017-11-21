@@ -231,7 +231,7 @@ class PyPanArtState(object):
             'pdf': ["--template %s/template/doc-setup/manuscript.latex" % here],
             'odt': [
                 "--template %s/template/doc-setup/odt.template" % here,
-                "--reference-odt %s" % odt_file,
+                "--reference-doc %s" % odt_file,  # PD2 --reference-odt
             ],
         }
 
@@ -267,7 +267,8 @@ class PyPanArtState(object):
             out.write(template.render(X=X, dcb='{{').encode('utf-8'))
             out.write('\n')
 
-        cmd = ['pandoc', '--smart', '--standalone', '--from markdown-fancy_lists']
+        cmd = ['pandoc', '--standalone', '--from markdown-fancy_lists']
+        # PD2 '--smart',
 
         if self.bib:
             cmd.append('--metadata bibliography="%s"' % self.bib)
@@ -563,3 +564,6 @@ def get_code_filter(source_name):
 
     source, name = source_name.split()
     return get_code(source, name)
+
+
+

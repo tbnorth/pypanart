@@ -29,7 +29,7 @@ $endfor$
 
 <!-- something odd here, dollar-abstract-dollar comes pre-wrapped in a text:p
      element, so wrapping it again creates a nested element text:p, which is
-     apparently not allowed, it doesn't doens't display.  So accept default
+     apparently not allowed, it doesn't display.  So accept default
      styling for abstract -->
 $if(abstract)$
 <text:p text:style-name="Heading_20_2">Abstract</text:p>
