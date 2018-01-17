@@ -1,6 +1,7 @@
 import ast
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -115,6 +116,29 @@ class PyPanArtState(object):
 
         return self.C, self.D
 
+    @staticmethod
+    def get_figures(filepath):
+        """get_figures - return a list of figures found in the named
+        markdown file
+
+        - hi-res versions of figures in files name figure_002.tif, 
+          figure_013.svg, figure_013.pdf, etc.
+        - a Figure Captions section, with the captions for each figure
+        - figures printed at the end, landscape for size?  No page numbers, etc.
+        - as above but in separate files?  Maybe not?
+
+        :param str filepath: path to file
+        :return: [{'caption': <cap>, 'file': <file>, 'ref': <ref>}, ...]
+        """
+
+        figs = []
+        with open(filepath) as md:
+            md = md.read()
+            md = re.findall(r"(?is)!\[.*?]\(.*?\){.*?}", md)
+            for fig in md:
+                caption, _, filepath, _, ref = re.split(r"(]\(|\){)", fig)
+                figs.append(dict(caption=caption[2:], file=filepath, ref=ref))
+        return figs
     def image_path(self, path, format=None):
         """image_path - return path for an image format
 
@@ -263,9 +287,26 @@ class PyPanArtState(object):
         X = {
             'fmt': img_fmt[fmt],
         }
-        with open('build/tmp/%s.%s.md' % (self.basename, fmt), 'w') as out:
+        source_file = 'build/tmp/%s.%s.md' % (self.basename, fmt)
+        with open(source_file, 'w') as out:
             out.write(template.render(X=X, dcb='{{').encode('utf-8'))
             out.write('\n')
+        figs = self.get_figures(source_file)
+        figures = 'build/figures'
+        if os.path.exists(figures):
+            shutil.rmtree(figures)
+        make_dir(figures)
+        for n, fig in enumerate(figs):
+            shutil.copyfile(
+                fig['file'],
+                "%s/figure_%04d%s" % (figures, n+1, os.path.splitext(fig['file'])[-1])
+            )
+
+        with open(source_file, 'a') as out:
+            out.write("\n\n# Figure captions\n\n")
+            for n, fig in enumerate(figs):
+                out.write("Figure %d: %s\n\n" % (n+1, fig['caption']))
+            out.write("\n\n# References\n\n")
 
         cmd = ['pandoc', '--standalone', '--from markdown-fancy_lists']
         # PD2 '--smart',
@@ -303,8 +344,8 @@ class PyPanArtState(object):
                     out.write(template.render(X=X, C=self.C, dcb='{{').encode('utf-8'))
 
         # run pandoc
-        cmd.append("--output build/{fmt}/{basename}.{fmt} build/tmp/{basename}.{fmt}.md".format(
-            fmt=fmt, basename=self.basename))
+        cmd.append("--output build/{fmt}/{basename}.{fmt} {source_file}".format(
+            fmt=fmt, basename=self.basename, source_file=source_file))
         print(" \\\n    ".join(cmd))
         cmd = ' '.join(cmd)
         make_dir("build/%s" % fmt)
