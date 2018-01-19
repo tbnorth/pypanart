@@ -32,7 +32,8 @@ class PyPanArtState(object):
     """PyPanArtState - Collect state for PyPanArt
     """
 
-    def __init__(self, basename, data_sources, parts, bib=None):
+    def __init__(self, basename, data_sources, parts, bib=None,
+        config=None):
         """basic inputs
 
         :param str basename: basename for article, e.g. "someproj"
@@ -44,7 +45,7 @@ class PyPanArtState(object):
         self.data_dir = os.path.join("build", "DATA")
         self.parts = parts
         self.statefile = os.path.join('build', self.basename + '.state.json')
-        self.C, self.D = self._get_context_objects(self.statefile)
+        self.C, self.D = self._get_context_objects(self.statefile, config=config)
         self.D.all_inputs = []
         self.D.all_outputs = []
         # use the first bibliography file found
@@ -57,8 +58,8 @@ class PyPanArtState(object):
             self.bib = None
 
     @staticmethod
-    def _get_context_objects(state_file):
-        """Return (DefaultDotDict,DefaultDotDict), being a persistent (JSON
+    def _get_context_objects(state_file, config=None):
+        """Return (DefaultDotDict, DefaultDotDict), being a persistent (JSON
         backed) and a runtime only object, both being shared state for make.py
         doit tasks.
 
@@ -66,10 +67,15 @@ class PyPanArtState(object):
 
             C, D = get_context_objects("/path/to/myproj.statefile.json")
         """
+
+        C = DefaultDotDict()
+        D = DefaultDotDict()
+        if config:
+            execfile(config, {'C': C, 'D': D})
+
         if os.path.exists(state_file):
-            C = DefaultDotDict.json_load(open(state_file))
-        else:
-            C = DefaultDotDict()
+            C.update(DefaultDotDict.json_load(open(state_file)))
+
         C._metadata.run.time = time.asctime()
         proc = Popen('git rev-parse HEAD'.split(), stdout=PIPE)
         commit, _ = proc.communicate()
@@ -84,8 +90,6 @@ class PyPanArtState(object):
         # doit inspects things looking for .create_doit_tasks and
         # failes when C and D return {}, so add dummy method
         C.create_doit_tasks = lambda: None
-
-        D = DefaultDotDict()
         D.create_doit_tasks = C.create_doit_tasks
 
         return C, D
@@ -291,21 +295,22 @@ class PyPanArtState(object):
         with open(source_file, 'w') as out:
             out.write(template.render(X=X, dcb='{{').encode('utf-8'))
             out.write('\n')
-        figs = self.get_figures(source_file)
-        figures = 'build/figures'
-        if os.path.exists(figures):
-            shutil.rmtree(figures)
-        make_dir(figures)
-        for n, fig in enumerate(figs):
-            shutil.copyfile(
-                fig['file'],
-                "%s/figure_%04d%s" % (figures, n+1, os.path.splitext(fig['file'])[-1])
-            )
-
-        with open(source_file, 'a') as out:
-            out.write("\n\n# Figure captions\n\n")
+        if fmt == 'pdf':
+            figs = self.get_figures(source_file)
+            figures = 'build/figures'
+            if os.path.exists(figures):
+                shutil.rmtree(figures)
+            make_dir(figures)
             for n, fig in enumerate(figs):
-                out.write("Figure %d: %s\n\n" % (n+1, fig['caption']))
+                shutil.copyfile(
+                    fig['file'],
+                    "%s/figure_%04d%s" % (figures, n+1, os.path.splitext(fig['file'])[-1])
+                )
+            with open(source_file, 'a') as out:
+                out.write("\n\n# Figure captions\n\n")
+                for n, fig in enumerate(figs):
+                    out.write("Figure %d: %s\n\n" % (n+1, fig['caption']))
+        with open(source_file, 'a') as out:
             out.write("\n\n# References\n\n")
 
         cmd = ['pandoc', '--standalone', '--from markdown-fancy_lists']
