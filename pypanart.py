@@ -39,6 +39,11 @@ class PyPanArtState(object):
         :param str basename: basename for article, e.g. "someproj"
         :param dict data_sources: mapping of names to data paths
         :param list parts: ordered lists of .md article sections
+        :param list or string bib: list of .bib files to look for,
+            uses first found, useful if the same file has different paths
+            on different OSes
+        :param list or string config: list of .py files to run to set up
+            C and D, mostly for simple parameters
         """
         self.basename = basename
         self.data_sources = data_sources
@@ -49,6 +54,8 @@ class PyPanArtState(object):
         self.D.all_inputs = []
         self.D.all_outputs = []
         # use the first bibliography file found
+        if not isinstance(bib, (list, tuple)):
+            bib = [bib]
         bib = [i for i in bib or [] if os.path.exists(i)]
         if bib:
             self.bib = bib[0]
@@ -66,12 +73,19 @@ class PyPanArtState(object):
         Typical usage:
 
             C, D = get_context_objects("/path/to/myproj.statefile.json")
+
+        :param str state_file: path to state file
+        :param str or list config: config files to execute for basic params
+        :return: persistent and runtime mapping objects
+        :rtype: (DefaultDotDict, DefaultDotDict)
         """
 
         C = DefaultDotDict()
         D = DefaultDotDict()
-        if config:
-            execfile(config, {'C': C, 'D': D})
+        if not isinstance(config, (list, tuple)):
+            config = [config]
+        for conf in config:
+            execfile(conf, {'C': C, 'D': D})
 
         if os.path.exists(state_file):
             C.update(DefaultDotDict.json_load(open(state_file)))
@@ -84,11 +98,13 @@ class PyPanArtState(object):
         mods = '+mods' if mods else ''
         C._metadata.run.commit = commit.strip()+mods
         C._metadata.run.commit_short = commit.strip()[:7]+mods
+        C._metadata.run.start_time = time.asctime()
+        C._metadata.run.configs = config
         C._metadata._filepath = state_file
         C._metadata.status = 'DRAFT'
 
         # doit inspects things looking for .create_doit_tasks and
-        # failes when C and D return {}, so add dummy method
+        # fails when C and D return {}, so add dummy method
         C.create_doit_tasks = lambda: None
         D.create_doit_tasks = C.create_doit_tasks
 
@@ -125,7 +141,7 @@ class PyPanArtState(object):
         """get_figures - return a list of figures found in the named
         markdown file
 
-        - hi-res versions of figures in files name figure_002.tif, 
+        - hi-res versions of figures in files name figure_002.tif,
           figure_013.svg, figure_013.pdf, etc.
         - a Figure Captions section, with the captions for each figure
         - figures printed at the end, landscape for size?  No page numbers, etc.
@@ -143,6 +159,7 @@ class PyPanArtState(object):
                 caption, _, filepath, _, ref = re.split(r"(]\(|\){)", fig)
                 figs.append(dict(caption=caption[2:], file=filepath, ref=ref))
         return figs
+
     def image_path(self, path, format=None):
         """image_path - return path for an image format
 
@@ -205,6 +222,7 @@ class PyPanArtState(object):
                             ],
                         }
                         yield task
+
     def make_data_loader(self):
         """load_data - load global data for other tasks"""
         def load_global(name, D=self.D):
@@ -420,6 +438,7 @@ class PyPanArtState(object):
                         'file_dep': [src],
                         'targets': [out],
                     }
+
     def make_markdown(self):
         """make_markdown - make markdown
         """
@@ -467,6 +486,7 @@ class PyPanArtState(object):
             function_task.create_doit_tasks = function_task
             return function_task
         return one_task_maker
+
     def preprocess_odt(self):
         """preprocess_odt - process reference ODT file for footer includes
         etc."""
@@ -545,8 +565,6 @@ def run_task(module, task):
     DoitMain(ModuleTaskLoader(module)).run([task])
     print("%.2f seconds" % (time.time()-start))
 
-
-
 def get_lines(tree, name):
     """
     get_lines - Get the lines defining name in source
@@ -610,6 +628,5 @@ def get_code_filter(source_name):
 
     source, name = source_name.split()
     return get_code(source, name)
-
 
 
