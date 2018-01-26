@@ -32,8 +32,19 @@ class PyPanArtState(object):
     """PyPanArtState - Collect state for PyPanArt
     """
 
+    @staticmethod
+    def as_list(x):
+        """handle x=None parameters that are strings or lists, make a
+        list if a single string is given
+        """
+        if x is None:
+            x = []
+        if not isinstance(x, (list, tuple)):
+            x = [x]
+        return x
+
     def __init__(self, basename, data_sources, parts, bib=None,
-        config=None):
+        config=None, setup=None):
         """basic inputs
 
         :param str basename: basename for article, e.g. "someproj"
@@ -44,19 +55,22 @@ class PyPanArtState(object):
             on different OSes
         :param list or string config: list of .py files to run to set up
             C and D, mostly for simple parameters
+        :param list or string setup: list of task names to run first,
+            before collect_data
         """
+
         self.basename = basename
         self.data_sources = data_sources
-        self.data_dir = os.path.join("build", "DATA")
+        self.data_dir = "build/DATA/"
         self.parts = parts
+        self.setup = self.as_list(setup)
         self.statefile = os.path.join('build', self.basename + '.state.json')
-        self.C, self.D = self._get_context_objects(self.statefile, config=config)
+        self.C, self.D = self._get_context_objects(self.statefile, config=self.as_list(config))
         self.D.all_inputs = []
         self.D.all_outputs = []
+        self.D.DATA = self.data_dir
         # use the first bibliography file found
-        if not isinstance(bib, (list, tuple)):
-            bib = [bib]
-        bib = [i for i in bib or [] if os.path.exists(i)]
+        bib = [i for i in self.as_list(bib) or [] if os.path.exists(i)]
         if bib:
             self.bib = bib[0]
             # output formats depehd on D.all_outputs, so append to that
@@ -188,14 +202,16 @@ class PyPanArtState(object):
         for name, sources in self.data_sources.items():
             sub_path = os.path.join(self.data_dir, name)
 
-            if isinstance(sources, list):
-                source_list = sources
-            else:
-                source_list = [sources]
+            source_list = self.as_list(sources)
 
             for sources in source_list:
 
                 sources = sources.split(':TYPE:')[0]  # used to manage shapefiles, not here
+
+                while '{{' in sources:
+                    i = sources.index('{{')
+                    j = sources.index('}}')
+                    sources = sources[:i] + eval(sources[i+2:j], {'C': self.C, 'D': self.D}) + sources[j+2:]
 
                 if sources.lower().split('://', 1)[0] in ('http', 'https', 'ftp'):
                     # SINGLE FILE remote targets
@@ -220,9 +236,9 @@ class PyPanArtState(object):
                                 (make_dir, (sub_path,)),
                                 (shutil.copy, (source, target)),
                             ],
+                            'task_dep': self.setup,
                         }
                         yield task
-
     def make_data_loader(self):
         """load_data - load global data for other tasks"""
         def load_global(name, D=self.D):
@@ -282,25 +298,32 @@ class PyPanArtState(object):
         }
 
         def path_to_image(path, fmt):
-            base = "img/" if fmt == 'html' else "build/tmp/img/"
+            ext_pick = '.pdf' if fmt == 'pdf' else '.png'
+            if path.startswith(self.data_dir):  # copy to img folder
+                if not os.path.exists(path):
+                    path += ext_pick
+                if not os.path.exists(path):
+                    print("NOTE: '%s' does not exist" % path)
+                relpath = os.path.relpath(path, start=self.data_dir)  # remove .data_dir
+                base = "build/html/img/" if fmt == 'html' else "build/tmp/img/"
+                img_path = os.path.join(base, relpath)
+                make_dir(os.path.dirname(img_path))
+                shutil.copyfile(path, img_path)
+                path = os.path.relpath(img_path, start=base)
+            if fmt == 'html':
+                base = "img/"  # relative to .html file
+                check = "build/html/img/"
+            else:
+                base = check = "build/tmp/img/"
+            test = os.path.join(check, path)
             path = os.path.join(base, path)
-            self.C.path = path
-            if not os.path.exists(path):
-                path += '.pdf' if fmt == 'pdf' else '.png'
-            if not os.path.exists(path):
-                print("WARNING: '%s' does not exist" % path)
+            #? self.C.path = path
+            if not os.path.exists(test):
+                path += ext_pick
+                test += ext_pick
+            if not os.path.exists(test):
+                print("WARNING: '%s' does not exist" % test)
             return path
-
-        # copy files from build/html/img to build/tmp/img in case
-        # other formats need them
-        for path, dirs, files in os.walk("build/html/img"):
-            for filename in files:
-                filepath = os.path.join(path, filename)
-                tmp_path = os.path.join(
-                    "build/tmp/img",
-                    os.path.relpath(filepath, start="build/html/img")
-                )
-                shutil.copyfile(filepath, tmp_path)
 
         env.filters['img'] = lambda path, fmt=fmt: path_to_image(path, fmt)
         env.filters['code'] = get_code_filter
@@ -313,6 +336,20 @@ class PyPanArtState(object):
         with open(source_file, 'w') as out:
             out.write(template.render(X=X, dcb='{{').encode('utf-8'))
             out.write('\n')
+
+        # copy files from build/html/img to build/tmp/img in case
+        # other formats need them
+        for path, dirs, files in os.walk("build/html/img"):
+            for filename in files:
+                filepath = os.path.join(path, filename)
+                tmp_path = os.path.join(
+                    "build/tmp/img",
+                    os.path.relpath(filepath, start="build/html/img")
+                )
+                if not os.path.exists(os.path.dirname(tmp_path)):
+                    make_dir(os.path.dirname(tmp_path))
+                shutil.copyfile(filepath, tmp_path)
+
         if fmt == 'pdf':
             figs = self.get_figures(source_file)
             figures = 'build/figures'
@@ -364,7 +401,7 @@ class PyPanArtState(object):
                 cmd.append('--include-in-header ' + tmp_file)
                 template = env.get_template('doc-setup/'+inc_i)  # don't use os.path.join()
                 with open(tmp_file, 'w') as out:
-                    out.write(template.render(X=X, C=self.C, dcb='{{').encode('utf-8'))
+                    out.write(template.render(X=X, C=self.C, D=self.D, dcb='{{').encode('utf-8'))
 
         # run pandoc
         cmd.append("--output build/{fmt}/{basename}.{fmt} {source_file}".format(
@@ -448,7 +485,9 @@ class PyPanArtState(object):
             **JINJA_COMMON
         )
 
-        env.filters['img'] = lambda path: "{{'%s'|img}}" % path
+        def img(path):
+            return "{{'%s'|img}}" % path
+        env.filters['img'] = img
         env.filters['code'] = get_code_filter
 
         X = {
@@ -460,7 +499,7 @@ class PyPanArtState(object):
         with open('build/tmp/%s.md' % self.basename, 'w') as out:
             for part in self.parts:
                 template = env.get_template(os.path.basename(part+'.md'))
-                out.write(template.render(C=self.C, X=X, dcb='{{dcb}}').encode('utf-8'))
+                out.write(template.render(C=self.C, D=self.D, X=X, dcb='{{dcb}}').encode('utf-8'))
                 out.write('\n\n')
 
     def one_task(self, **kwargs):
@@ -508,7 +547,7 @@ class PyPanArtState(object):
         )
         template = env.get_template('styles')
         with open(styles_new, 'w') as out:
-            out.write(template.render(C=self.C).encode('utf-8'))
+            out.write(template.render(C=self.C, D=self.D).encode('utf-8'))
         shutil.copyfile(styles_new, styles_old)
 
         # zip it up again
