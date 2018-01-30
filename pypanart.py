@@ -581,7 +581,7 @@ class PyPanArtState(object):
         finally:
             del self.C['create_doit_tasks']  # see get_context_objects()
             make_dir(os.path.dirname(self.C._metadata._filepath))
-            json.dump(self.C, open(self.C._metadata._filepath, 'w'))
+            json.dump(self.C, open(self.C._metadata._filepath, 'w'), indent=2, sort_keys=True)
             print("Results in '%s'" % self.C._metadata._filepath)
 
 
