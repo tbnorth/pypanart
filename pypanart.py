@@ -386,6 +386,7 @@ class PyPanArtState(object):
             cmd.append('--filter %s' % filter_)
 
         cmd.append('--filter pandoc-citeproc')  # after other filters
+        cmd.append('--from markdown+pipe_tables')
 
         # pass include files through template processor and add to cmd. line
         if fmt in inc_fmt:
@@ -487,8 +488,16 @@ class PyPanArtState(object):
 
         def img(path):
             return "{{'%s'|img}}" % path
+
+        def pipe_table(table):
+            table = [i.split(',') for i in table.split('\n')]
+            text = ['|'.join(i) for i in table]
+            text[1:1] = ['|'.join('---' for i in table[0])]
+            return '\n'.join(text)
+
         env.filters['img'] = img
         env.filters['code'] = get_code_filter
+        env.filters['pipe_table'] = pipe_table
 
         X = {
             'fmt': '{{X.fmt}}',
@@ -501,7 +510,6 @@ class PyPanArtState(object):
                 template = env.get_template(os.path.basename(part+'.md'))
                 out.write(template.render(C=self.C, D=self.D, X=X, dcb='{{dcb}}').encode('utf-8'))
                 out.write('\n\n')
-
     def one_task(self, **kwargs):
         """one_task - decorator - simple task definition
 
