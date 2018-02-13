@@ -1,8 +1,10 @@
 import ast
+import csv
 import json
 import os
 import re
 import shutil
+from StringIO import StringIO
 import sys
 import tempfile
 import time
@@ -490,7 +492,7 @@ class PyPanArtState(object):
             return "{{'%s'|img}}" % path
 
         def pipe_table(table):
-            table = [i.split(',') for i in table.split('\n')]
+            table = list(csv.reader(StringIO(table.strip())))
             text = ['|'.join(i) for i in table]
             text[1:1] = ['|'.join('---' for i in table[0])]
             return '\n'.join(text)
