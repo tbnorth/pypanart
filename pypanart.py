@@ -492,8 +492,18 @@ class PyPanArtState(object):
             return "{{'%s'|img}}" % path
 
         def pipe_table(table):
+            """
+            pipe_table - convert CSV table to pandoc pipe_table
+        
+            :param str table: CSV table as text
+            :return: pandoc pipe table format
+            :rtype: str
+            """
+            # convert text to list of lists
             table = list(csv.reader(StringIO(table.strip())))
+            # convert lists to '|' delimited text
             text = ['|'.join(i) for i in table]
+            # insert header separator line
             text[1:1] = ['|'.join('---' for i in table[0])]
             return '\n'.join(text)
 
