@@ -1,3 +1,8 @@
+"""
+`conda install -c conda-forge bsddb` if doit backend DB fails with
+ImportError: No module named _bsddb
+"""
+
 import ast
 import csv
 import json
@@ -30,6 +35,10 @@ try:
 except ImportError:
     np = None
 
+try:  # stop pyflakes complaining
+    execfile
+except NameError:
+    execfile = list
 class PyPanArtState(object):
     """PyPanArtState - Collect state for PyPanArt
     """
@@ -96,7 +105,7 @@ class PyPanArtState(object):
         :rtype: (DefaultDotDict, DefaultDotDict)
         """
 
-        C = DefaultDotDict()
+        C = DefaultDotDict(string_keys=True)
         D = DefaultDotDict()
         if not isinstance(config, (list, tuple)):
             config = [config]
@@ -210,6 +219,7 @@ class PyPanArtState(object):
 
                 sources = sources.split(':TYPE:')[0]  # used to manage shapefiles, not here
 
+                # simple eval. of "jinja like" {{expression}} substitutions
                 while '{{' in sources:
                     i = sources.index('{{')
                     j = sources.index('}}')
@@ -241,6 +251,7 @@ class PyPanArtState(object):
                             'task_dep': self.setup,
                         }
                         yield task
+
     def make_data_loader(self):
         """load_data - load global data for other tasks"""
         def load_global(name, D=self.D):
