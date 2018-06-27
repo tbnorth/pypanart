@@ -185,6 +185,29 @@ class PyPanArtState(object):
                 figs.append(dict(caption=caption[2:], file=filepath, ref=ref))
         return figs
 
+    def jinja_file(self, in_file, out_file=None):
+        """jinja_file - Run jinja on a file
+
+        Args:
+            in_file (str): path to input file
+            out_file (str or None): path to output file, generated if omitted
+        Returns:
+            str: path to output file
+        """
+
+        template_dict = {'tmplt': open(in_file).read().decode('utf-8')}
+        env = jinja2.Environment(
+            loader=jinja2.DictLoader(template_dict),
+            **JINJA_COMMON
+        )
+        template = env.get_template('tmplt')
+        if out_file is None:
+            # suffix required to stop pandoc adding one
+            fd, out_file = tempfile.mkstemp(suffix='.template')
+            os.close(fd)
+        with open(out_file, 'w') as out:
+            out.write(template.render(C=self.C, D=self.D).encode('utf-8'))
+        return out_file
     def image_path(self, path, format=None):
         """image_path - return path for an image format
 
@@ -298,10 +321,12 @@ class PyPanArtState(object):
         here = os.path.dirname(__file__)
         # FIXME look for user's modified version first
         # FIXME use generic --template <format_name>.template
+        if fmt == 'html':
+            template = self.jinja_file("%s/template/doc-setup/html.template" % here)
         extra_fmt = {
             'html': [
                 "--toc", "--mathjax",
-                "--template %s/template/doc-setup/html.template" % here,
+                "--template %s" % template,
             ],
             'pdf': ["--template %s/template/doc-setup/manuscript.latex" % here],
             'odt': [

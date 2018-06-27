@@ -56,6 +56,9 @@ $if(author.corresponding)$$if(author.email)$
 $endif$$endif$
 $endfor$
 
+{{C._metadata.status}} {{C._metadata.run.commit_short}}
+{{C._metadata.run.time}}
+
 $if(abstract)$
 <p>$abstract$</p>
 $endif$
