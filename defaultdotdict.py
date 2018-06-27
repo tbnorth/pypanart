@@ -14,21 +14,38 @@ Terry N. Brown, terrynbrown@gmail.com, Wed Mar 01 09:44:29 2017
 
 import json
 
+try:  # Python 2 / 3 compatible string testing
+    basestring
+except NameError:
+    basestring = str
+
+class KeyNotAString(Exception): pass
+
 class DefaultDotDict(dict):
     """Allow a.x as well as a['x'] for dicts"""
+    def __init__(self, string_keys=False, *args, **kwargs):
+        dict.__init__(self, *args, **kwargs)
+        self._string_keys = string_keys
     def __getattr__(self, item):
         # return the item or an empty DefaultDotDict
+        if self._string_keys and not isinstance(item, basestring):
+            raise KeyNotAString(str(item))
         if item not in self:
-            self[item] = DefaultDotDict()
+            self[item] = DefaultDotDict(string_keys=self._string_keys)
         return self[item]
-
     def __getitem__(self, item):
         # return the item or an empty DefaultDotDict
+        if self._string_keys and not isinstance(item, basestring):
+            raise KeyNotAString(str(item))
         if item not in self:
-            self[item] = DefaultDotDict()
+            self[item] = DefaultDotDict(string_keys=self._string_keys)
         return super(DefaultDotDict, self).__getitem__(item)
 
     def __setattr__(self, key, value):
+        if key == '_string_keys':
+            return dict.__setattr__(self, key, value)
+        if self._string_keys and not isinstance(key, basestring):
+            raise KeyNotAString(str(key))
         self[key] = value
 
     @staticmethod
