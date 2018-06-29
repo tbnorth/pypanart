@@ -281,7 +281,7 @@ class PyPanArtState(object):
             self.D.all_inputs.append(self.data_path(name))
             self.D[name] = np.genfromtxt(
                 self.data_path(name), delimiter=',', names=True, dtype=None,
-                invalid_raise=False, loose=True, encoding=None)
+                invalid_raise=False, loose=True) # , encoding=None)
             globals()[name] = self.D[name]
         for name in self.data_sources:
             if self.data_path(name).endswith('.csv') and name not in self.D:

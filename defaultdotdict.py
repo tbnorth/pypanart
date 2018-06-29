@@ -52,13 +52,14 @@ class DefaultDotDict(dict):
     @staticmethod
     def json_object_hook(dct):
         """for JSON's object_hook argument, convert dicts to DefaultDotDicts"""
-        return DefaultDotDict(dct)
+        ans = DefaultDotDict()
+        ans.update(dct)
+        return ans
 
     @staticmethod
     def json_load(fileobj):
         """used like json.load, but uses DefaultDotDict.json_object_hook"""
         return json.load(fileobj, object_hook=DefaultDotDict.json_object_hook)
-
 
 def main():
     """simple test / demo of DefaultDotDict"""
