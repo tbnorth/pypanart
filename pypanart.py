@@ -323,6 +323,10 @@ class PyPanArtState(object):
         # FIXME use generic --template <format_name>.template
         if fmt == 'html':
             template = self.jinja_file("%s/template/doc-setup/html.template" % here)
+        elif fmt == 'pdf':
+            template = os.path.abspath('doc-setup/manuscript.latex')
+            if not os.path.exists(template):
+                template = "%s/template/doc-setup/manuscript.latex" % here
         else:
             template = ''
         extra_fmt = {
@@ -330,7 +334,7 @@ class PyPanArtState(object):
                 "--toc", "--mathjax",
                 "--template %s" % template,
             ],
-            'pdf': ["--latex-engine=xelatex --template %s/template/doc-setup/manuscript.latex" % here],
+            'pdf': ["--latex-engine=xelatex --template %s" % template],
             'odt': [
                 "--template %s/template/doc-setup/odt.template" % here,
                 "--reference-doc %s" % odt_file,  # PD2 --reference-odt
