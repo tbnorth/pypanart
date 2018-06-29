@@ -281,7 +281,7 @@ class PyPanArtState(object):
             self.D.all_inputs.append(self.data_path(name))
             self.D[name] = np.genfromtxt(
                 self.data_path(name), delimiter=',', names=True, dtype=None,
-                invalid_raise=False, loose=True)
+                invalid_raise=False, loose=True, encoding=None)
             globals()[name] = self.D[name]
         for name in self.data_sources:
             if self.data_path(name).endswith('.csv') and name not in self.D:
@@ -323,12 +323,14 @@ class PyPanArtState(object):
         # FIXME use generic --template <format_name>.template
         if fmt == 'html':
             template = self.jinja_file("%s/template/doc-setup/html.template" % here)
+        else:
+            template = ''
         extra_fmt = {
             'html': [
                 "--toc", "--mathjax",
                 "--template %s" % template,
             ],
-            'pdf': ["--template %s/template/doc-setup/manuscript.latex" % here],
+            'pdf': ["--latex-engine=xelatex --template %s/template/doc-setup/manuscript.latex" % here],
             'odt': [
                 "--template %s/template/doc-setup/odt.template" % here,
                 "--reference-doc %s" % odt_file,  # PD2 --reference-odt

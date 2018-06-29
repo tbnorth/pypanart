@@ -26,3 +26,5 @@
 \fancyfoot[RE,RO]{\thepage}
 \fancyfoot[LE,LO]{\tiny {{C._metadata.status}} {{C._metadata.run.commit_short}}}
 \fancypagestyle{plain}{\thispagestyle{fancy}}
+\DeclareTextCommandDefault{\nobreakspace}{\leavevmode\nobreak\ }
+\DeclareTextCommand{\nobreakspace}{T1}{\leavevmode\nobreak\ }
