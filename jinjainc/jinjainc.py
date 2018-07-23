@@ -14,6 +14,30 @@ class IncerBlock:
         self.lines = []
 
 class Incer:
+    """
+    Given a Jinja2 template like the one below, provide a variable
+    to be used in the context which gives incremental execution of
+    ```python``` code blocks.  So for template.render(_=Incer(template_text)),
+    the value of {{ _.a }} will depend on where in the template the
+    expression occurs, updated as appropriate by code blocks.
+
+    ---cut here---
+
+    `a` is {{ _.a }}, twice {{ _.a }}, thrice {{ _.a }}.
+    ```python
+    a = 9
+    b = 3.2
+    ```
+    But now `a` = {{ _.a }} ({{ _.a }}).
+    ```python
+    a = 10
+    ```
+    And then `a` is {{ _.a }}.
+    ```python
+    a *= b
+    ```
+    Finally a: {{ _.a }} ({{ _.a }}).
+    """
     def __init__(self, template_text):
         self.__globals = {}
         self.__blocks = [IncerBlock(0)]
@@ -40,30 +64,14 @@ class Incer:
 
 def main():
 
-    test_text = """
-Once {{ _.a }}, twice {{ _.a }}, thrice  {{ _.a }}.
-```python
-a = 9
-b = 3.2
-```
-But now {{ _.a }} ({{ _.a }}).
+    import re  # cut the example out of the doc string.
+    template_text = re.sub(r'.*---cut here---', '', Incer.__doc__, flags=re.DOTALL)
+    template_text = re.sub(r'^\s+', '', template_text, flags=re.MULTILINE)  # unindent
 
-```python
-a = 10
-```
-And then {{ _.a }}.
-```python
-a *= b
-```
-Finally {{ _.a }} ({{ _.a }}).
-"""
-
-    incer = Incer(test_text)
-
-    loader = DictLoader({'test_text': test_text})
+    loader = DictLoader({'template_text': template_text})
     environment = Environment(loader=loader)
-    template = environment.get_template('test_text')
-    print(template.render(_=incer))
+    template = environment.get_template('template_text')
+    print(template.render(_=Incer(template_text)))
 
 if __name__ == '__main__':
     main()
