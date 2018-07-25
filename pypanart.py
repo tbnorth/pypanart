@@ -39,6 +39,31 @@ try:  # stop pyflakes complaining
     execfile
 except NameError:
     execfile = list
+class ExecutionContext(object):
+    """ExecutionContext - Change os.getcwd() and sys.argv temporarily
+    """
+
+    def __init__(self, args=None, cd=None):
+        """
+        Args:
+            args (list): replacement for sys.argv
+            cd (str): temporary working dir
+        """
+        self.args = args
+        self.cd = cd
+
+    def __enter__(self):
+        self.owd = os.getcwd()
+        self.argv = sys.argv
+        if self.cd:
+            os.chdir(self.cd)
+        if self.args is not None:
+            sys.argv = self.args
+        return self
+
+    def __exit__(self, type, value, traceback):
+        os.chdir(self.owd)
+        sys.argv = self.argv
 class PyPanArtState(object):
     """PyPanArtState - Collect state for PyPanArt
     """
