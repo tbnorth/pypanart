@@ -63,6 +63,13 @@ $if(abstract)$
 <p>$abstract$</p>
 $endif$
 
+$if(keywords)$
+<p class='keywords'><span class='keywords_label'>Keywords:</span>
+$for(keywords)$
+$keywords$$sep$, $endfor$
+</p>
+$endif$
+
 $if(date)$
 <h3 class="date">$date$</h3>
 $endif$

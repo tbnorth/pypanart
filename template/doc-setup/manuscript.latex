@@ -267,6 +267,8 @@ $abstract$
 $endif$
 \end{singlespace}
 
+$if(keywords)${\bf Keywords:} $for(keywords)$$keywords$$sep$, $endfor$$endif$
+
 $for(include-before)$
 $include-before$
 
