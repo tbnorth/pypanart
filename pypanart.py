@@ -602,6 +602,7 @@ class PyPanArtState(object):
                 del kwargs['active']
             else:
                 return lambda function: None
+
         if 'targets' in kwargs:
             self.D.all_outputs.extend(kwargs['targets'])
         def one_task_maker(function):

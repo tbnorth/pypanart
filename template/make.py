@@ -23,7 +23,7 @@ import numpy as np
 try:
     import matplotlib.pyplot as plt
     import matplotlib
-    matplotlib.rc('font', family='DejaVu Sans')
+    matplotlib.rc('font', family='DejaVu Sans, Arial')
     import scipy.stats
 except ImportError:
     plt = None
