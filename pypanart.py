@@ -39,6 +39,8 @@ try:  # stop pyflakes complaining
     execfile
 except NameError:
     execfile = list
+
+class OldFileFromContext(Exception): pass
 class ExecutionContext(object):
     """ExecutionContext - Change os.getcwd() and sys.argv temporarily
     """
@@ -51,6 +53,8 @@ class ExecutionContext(object):
         """
         self.args = args
         self.cd = cd
+        self.born = time.time()
+
 
     def __enter__(self):
         self.owd = os.getcwd()
@@ -64,6 +68,18 @@ class ExecutionContext(object):
     def __exit__(self, type, value, traceback):
         os.chdir(self.owd)
         sys.argv = self.argv
+    def check_new(self, filepath):
+        """check_new - check that the given path was modified *after*
+        this context was created.
+
+        Args:
+            filepath (str): path to check
+        Raises:
+            OldFileFromContext: if file is older than context
+        """
+        if os.stat(filepath).st_mtime < self.born:
+            raise OldFileFromContext("File '%s' older than context" % filepath)
+        return True
 class PyPanArtState(object):
     """PyPanArtState - Collect state for PyPanArt
     """
