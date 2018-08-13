@@ -117,7 +117,7 @@ class PyPanArtState(object):
         self.parts = parts
         self.setup = self.as_list(setup)
         self.statefile = os.path.join('build', self.basename + '.state.json')
-        self.C, self.D = self._get_context_objects(self.statefile, config=self.as_list(config))
+        self.C, self.D = self._get_context_objects(self.statefile, config=self.as_list(config), parts=self.parts)
         self.D.all_inputs = []
         self.D.all_outputs = []
         self.D.DATA = self.data_dir
@@ -131,7 +131,7 @@ class PyPanArtState(object):
             self.bib = None
 
     @staticmethod
-    def _get_context_objects(state_file, config=None):
+    def _get_context_objects(state_file, config=None, parts=None):
         """Return (DefaultDotDict, DefaultDotDict), being a persistent (JSON
         backed) and a runtime only object, both being shared state for make.py
         doit tasks.
@@ -168,6 +168,23 @@ class PyPanArtState(object):
         C._metadata.run.configs = config
         C._metadata._filepath = state_file
         C._metadata.status = 'DRAFT'
+
+        try:
+            if parts:
+                import yaml
+                with open(os.path.join('parts', parts[0]+'.md')) as f:
+                    dataMap = yaml.safe_load(f)
+                    C._metadata.title = dataMap['title']
+                    C._metadata.authors = ', '.join(i['name'] for i in dataMap['author'])
+                    corresponding = [i for i in dataMap['author'] if i.get('corresponding')]
+                    print(corresponding)
+                    if corresponding:
+                        C._metadata.corresponding = "{c[email]} {c[name]} corresponding author".format(
+                            c=corresponding[0])
+                    else:
+                        C._metadata.corresponding = ""
+        except:
+            print("Parsing part 0 as YAML failed")
 
         # doit inspects things looking for .create_doit_tasks and
         # fails when C and D return {}, so add dummy method
