@@ -148,13 +148,14 @@ class PyPanArtState(object):
 
         C = DefaultDotDict(string_keys=True)
         D = DefaultDotDict()
+
+        if os.path.exists(state_file):
+            C.update(DefaultDotDict.json_load(open(state_file)))
+
         if not isinstance(config, (list, tuple)):
             config = [config]
         for conf in config:
             execfile(conf, {'C': C, 'D': D})
-
-        if os.path.exists(state_file):
-            C.update(DefaultDotDict.json_load(open(state_file)))
 
         C._metadata.run.time = time.asctime()
         proc = Popen('git rev-parse HEAD'.split(), stdout=PIPE)
@@ -464,9 +465,10 @@ class PyPanArtState(object):
                     "%s/figure_%04d%s" % (figures, n+1, os.path.splitext(fig['file'])[-1])
                 )
             with open(source_file, 'a') as out:
-                out.write("\n\n# Figure captions\n\n")
+                out.write("\n\\newpage\n\n# Figure captions\n\n")
                 for n, fig in enumerate(figs):
                     out.write("Figure %d: %s\n\n" % (n+1, fig['caption']))
+                out.write("\n\n\\newpage\n\n")
         with open(source_file, 'a') as out:
             out.write("\n\n# References\n\n")
 
