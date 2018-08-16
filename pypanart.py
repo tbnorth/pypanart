@@ -393,7 +393,7 @@ class PyPanArtState(object):
                 "--toc", "--mathjax",
                 "--template %s" % template,
             ],
-            'pdf': ["--latex-engine=xelatex --template %s" % template],
+            'pdf': ["--pdf-engine=xelatex --template %s" % template],
             'odt': [
                 "--template %s/template/doc-setup/odt.template" % here,
                 "--reference-doc %s" % odt_file,  # PD2 --reference-odt
