@@ -428,8 +428,24 @@ class PyPanArtState(object):
                 print("WARNING: '%s' does not exist" % test)
             return path
 
+        def color_boxes(text):
+            """\colorbox{foo} doesn't wrap, and \hl{foo} from \usepackage{soul}
+            is only highlighting the first char, so..."""
+            ans = ['']
+            for word in text.split():
+                if len(ans[-1]) < 90:
+                    ans[-1] += ' ' + word
+                else:
+                    ans.append(word)
+            return '\\\n'.join("\\colorbox[HTML]{ebc631}{%s}" % i.strip() for i in ans)
         env.filters['img'] = lambda path, fmt=fmt: path_to_image(path, fmt)
         env.filters['code'] = get_code_filter
+        if fmt == 'pdf':
+            env.filters['FM'] = color_boxes
+        elif fmt == 'html':
+            env.filters['FM'] = lambda text: "<span style='background: gold'>%s</span>" % text
+        else:
+            env.filters['FM'] = lambda text: "**%s**" % text
 
         template = env.get_template('build/tmp/%s.md' % self.basename)
         X = {
@@ -596,7 +612,7 @@ class PyPanArtState(object):
         def pipe_table(table):
             """
             pipe_table - convert CSV table to pandoc pipe_table
-        
+
             :param str table: CSV table as text
             :return: pandoc pipe table format
             :rtype: str
@@ -612,6 +628,7 @@ class PyPanArtState(object):
         env.filters['img'] = img
         env.filters['code'] = get_code_filter
         env.filters['pipe_table'] = pipe_table
+        env.filters['FM'] = lambda text: '{{"%s"|FM}}' % text
 
         X = {
             'fmt': '{{X.fmt}}',
