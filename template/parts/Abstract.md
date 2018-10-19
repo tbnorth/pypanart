@@ -55,5 +55,5 @@ cover: |
   **Note:** figures included in place for reviewers convenience
   *and* as separate numbered files.  In place copies will be removed for final
   journal submission.
+...
 
----
