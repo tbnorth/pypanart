@@ -24,16 +24,16 @@ output:
     # template: doc-setup/manuscript.latex
   word_document: null
 capsize: normalsize
+documentclass: article
 classoption: letter
 # csl: ecology.csl
-documentclass: article
 # figtab_atend: no    FIXME BROKEN
 file-includes: doc-setup/extra.latex
 fontsize: 11pt
 geometry: margin=1in
 linenumbers: yes
-bibliography: references.bib
-spacing: doublespacing
+# bibliography: references.bib
+spacing: singlespacing
 abstract: |
 
     Would be here
