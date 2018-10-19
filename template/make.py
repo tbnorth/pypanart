@@ -34,7 +34,7 @@ from pypanart import run_task, make_dir
 
 def task_collect_data():
     """add `collect_data` task from pypanart
-    
+
     This is 1/3 boiler plate functions that must occur in PyPanArt
     make.py files.
     """
@@ -42,7 +42,7 @@ def task_collect_data():
 
 def task_load_data():
     """add `load_data` task from pypanart
-    
+
     This is 2/3 boiler plate functions that must occur in PyPanArt
     make.py files.
     """
@@ -54,7 +54,7 @@ def task_fmt():
 
 def task_img():
     """add `img` task from pypanart
-    
+
     This is 3/3 boiler plate functions that must occur in PyPanArt
     make.py files.
     """
@@ -99,7 +99,7 @@ def basic_plot():
     plt.xlim(xlim)
     plt.ylim(ylim)
     plt.text(-1200, 600, "$r^2=$%s"%np.round(d.r_value, 2))
-    
+
     for fmt in 'png', 'pdf':
         filepath = art.image_path('basic_plot', fmt)
         plt.savefig(filepath)

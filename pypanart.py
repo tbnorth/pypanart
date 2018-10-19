@@ -41,6 +41,7 @@ except NameError:
     execfile = list
 
 class OldFileFromContext(Exception): pass
+
 class ExecutionContext(object):
     """ExecutionContext - Change os.getcwd() and sys.argv temporarily
     """
@@ -80,6 +81,7 @@ class ExecutionContext(object):
         if os.stat(filepath).st_mtime < self.born:
             raise OldFileFromContext("File '%s' older than context" % filepath)
         return True
+
 class PyPanArtState(object):
     """PyPanArtState - Collect state for PyPanArt
     """
@@ -267,6 +269,7 @@ class PyPanArtState(object):
         with open(out_file, 'w') as out:
             out.write(template.render(C=self.C, D=self.D).encode('utf-8'))
         return out_file
+
     def image_path(self, path, format=None):
         """image_path - return path for an image format
 
@@ -365,11 +368,13 @@ class PyPanArtState(object):
             'odt': 'png',
             'html': 'png',
             'pdf': 'pdf',
+            'tex': 'pdf',
             'docx': 'png',
         }
         inc_fmt = {  # include format for document formats
             'html': 'css',
             'pdf': 'inc',
+            'tex': 'inc',
         }
 
         if fmt == 'odt':
@@ -382,7 +387,7 @@ class PyPanArtState(object):
         # FIXME use generic --template <format_name>.template
         if fmt == 'html':
             template = self.jinja_file("%s/template/doc-setup/html.template" % here)
-        elif fmt == 'pdf':
+        elif fmt in ('pdf', 'tex'):
             template = os.path.abspath('doc-setup/manuscript.latex')
             if not os.path.exists(template):
                 template = "%s/template/doc-setup/manuscript.latex" % here
@@ -399,9 +404,10 @@ class PyPanArtState(object):
                 "--reference-doc %s" % odt_file,  # PD2 --reference-odt
             ],
         }
+        extra_fmt['tex'] = extra_fmt['pdf']
 
         def path_to_image(path, fmt):
-            ext_pick = '.pdf' if fmt == 'pdf' else '.png'
+            ext_pick = '.pdf' if fmt in ('pdf', 'tex') else '.png'
             if path.startswith(self.data_dir):  # copy to img folder
                 if not os.path.exists(path):
                     path += ext_pick
@@ -440,7 +446,7 @@ class PyPanArtState(object):
             return '\\\n'.join("\\colorbox[HTML]{ebc631}{%s}" % i.strip() for i in ans)
         env.filters['img'] = lambda path, fmt=fmt: path_to_image(path, fmt)
         env.filters['code'] = get_code_filter
-        if fmt == 'pdf':
+        if fmt in ('pdf', 'tex'):
             env.filters['FM'] = color_boxes
         elif fmt == 'html':
             env.filters['FM'] = lambda text: "<span style='background: gold'>%s</span>" % text
@@ -469,7 +475,7 @@ class PyPanArtState(object):
                     make_dir(os.path.dirname(tmp_path))
                 shutil.copyfile(filepath, tmp_path)
 
-        if fmt == 'pdf':
+        if fmt in ('pdf', 'tex'):
             figs = self.get_figures(source_file)
             figures = 'build/figures'
             if os.path.exists(figures):
@@ -546,7 +552,7 @@ class PyPanArtState(object):
             'targets': ['build/tmp/%s.md' % self.basename],
         }
         file_dep += ['build/tmp/%s.md' % self.basename]
-        for fmt in 'html pdf odt docx'.split():
+        for fmt in 'html pdf odt docx tex'.split():
             yield {
                 'name': fmt,
                 'actions': [(self.make_fmt, (fmt,))],
@@ -641,6 +647,7 @@ class PyPanArtState(object):
                 template = env.get_template(os.path.basename(part+'.md'))
                 out.write(template.render(C=self.C, D=self.D, X=X, dcb='{{dcb}}').encode('utf-8'))
                 out.write('\n\n')
+
     def one_task(self, **kwargs):
         """one_task - decorator - simple task definition
 

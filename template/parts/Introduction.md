@@ -1,4 +1,5 @@
 # Introduction
+
 Yihui Xie's `knitr` [@Xie2014; @Xie2015; @Xie2016].
 
 ![A figure demonstrating the conversion of `.svg` sources to `.png` or
@@ -10,18 +11,21 @@ made by the img task. The background image is saved in the special
 images in folders other than `base` to build/html/img.
 ]({{'demo_figure'|img}}){#fig:demo_figure}
 
+## Code extraction / insertion
 
 `{{dcb}}"../pypanart.py get_code"|code}}`
 
-
+Extract `get_code()`
 ```python
 {{"../pypanart.py get_code"|code}}
 ```
 
+Extract `JINJA_COMMON`
 ```python
 {{"../pypanart.py JINJA_COMMON"|code}}
 ```
 
+Extract method `preprocess_odt`
 ```python
 {{"../pypanart.py preprocess_odt"|code}}
 ```

@@ -27,7 +27,7 @@ capsize: normalsize
 classoption: letter
 # csl: ecology.csl
 documentclass: article
-figtab_atend: no
+# figtab_atend: no    FIXME BROKEN
 file-includes: doc-setup/extra.latex
 fontsize: 11pt
 geometry: margin=1in
@@ -37,5 +37,23 @@ spacing: doublespacing
 abstract: |
 
     Would be here
+
+keywords: [transparency, reproducibility, reproducible research]
+
+cover: |
+
+  ### Cover page:
+
+  ## {{C._metadata.title}}
+
+  {{C._metadata.authors}}
+
+  {{C._metadata.corresponding}}
+
+  This copy revised / generated {{C._metadata.run.time}}
+
+  **Note:** figures included in place for reviewers convenience
+  *and* as separate numbered files.  In place copies will be removed for final
+  journal submission.
 
 ---
