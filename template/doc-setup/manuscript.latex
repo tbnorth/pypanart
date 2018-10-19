@@ -8,9 +8,37 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[$if(fontsize)$$fontsize$,$endif$$if(lang)$$lang$,$endif$$if(papersize)$$papersize$,$endif$$for(classoption)$$classoption$$sep$,$endfor$]{$documentclass$}
+
+\usepackage{cmap} % to avoid fi ligature translation issues in PDFs
+% \usepackage[noTex]{mmap}
+
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
+
+% \usepackage{lmodern}
 \usepackage{amssymb,amsmath}
+\usepackage{mathptmx}
+
+
+% \usepackage[scaled]{helvet}
+% \renewcommand\familydefault{\sfdefault} 
+% \usepackage{fontspec}
+
+% \usepackage{xunicode}
+% \usepackage{polyglossia}
+% \usepackage{courier}
+
+% \usepackage{hyperref}
+\usepackage{xcolor}
+% \hypersetup{
+%     colorlinks,
+%     linkcolor={red!50!black},
+%     citecolor={blue!50!black},
+%     urlcolor={blue!80!black}
+% }
+
+
+
+
 
 %% TNB start backports of things needed by pandoc now
 \providecommand{\tightlist}{%
@@ -212,9 +240,20 @@ $for(header-includes)$
 $header-includes$
 $endfor$
 
+% \setmainfont{DejaVu Sans}
+\setmainfont[Ligatures={NoRequired,NoCommon,NoContextual}]{DejaVu Sans}
+
 \begin{document}
 %%Edited by @jhollist 09/15/2014, @tbnorth 20170825
 %%Adds title from YAML
+
+$if(hide_cover)$$else$$if(cover)$
+\pagenumbering{gobble}
+$cover$
+\newpage
+\pagenumbering{arabic}
+$endif$$endif$
+
 \begin{singlespace}
 $if(title)$
 \begin{center}
@@ -226,31 +265,35 @@ $endif$
 \large
 $for(author)$
 $if(author.name)$
-$author.name$$if(author.corresponding)$$if(author.email)$\textsuperscript{*}$endif$$endif$\textsuperscript{$author.affilnum$}$else$$author$$endif$$sep$, $endfor$
+$author.name$$if(author.affilnum)$$if(author.corresponding)$ \textsuperscript{*}$endif$ \textsuperscript{$author.affilnum$} $endif$
+$else$
+$author$
+$endif$
+$endfor$
 \end{center}
 %%Adds affiliations from YAML
 \begin{justify}
 \footnotesize \emph{
 $for(affiliation)$
-\\*
-\textsuperscript{$affiliation.affilnum$}$affiliation.affil$\\*
+\textsuperscript{$affiliation.affilnum$}$affiliation.affil$
 $endfor$
 }
-%%Adds corresponding author email(s) from YAML
+%%Adds (corresponding) author email(s) from YAML
 \newcounter{num}
 \setcounter{num}{1}
 \\[0.1cm]
-\footnotesize \emph{ 
-$for(author)$
-$if(author.corresponding)$
+\footnotesize \emph{%
+$for(author)$%
+$if(author.corresponding)$%
 \ifnum\value{num}=1%
-\textsuperscript{*}corresponding author:
-\fi
-$author.email$
-\stepcounter{num}
-$endif$
-$endfor$
+\textsuperscript{*}corresponding author:%
+\fi%
+$author.email$%
+\stepcounter{num}%
+$endif$%
+$endfor$%
 }
+
 \end{justify}
 %%Adds date from YAML
 $if(date)$
@@ -271,8 +314,8 @@ $if(keywords)${\bf Keywords:} $for(keywords)$$keywords$$sep$, $endfor$$endif$
 
 $for(include-before)$
 $include-before$
-
 $endfor$
+
 $if(toc)$
 {
 \hypersetup{linkcolor=black}
@@ -280,6 +323,8 @@ $if(toc)$
 \tableofcontents
 }
 $endif$
+
+\newpage
 
 $body$
 
