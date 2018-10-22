@@ -30,3 +30,18 @@ Extract method `preprocess_odt`
 {{"../pypanart.py preprocess_odt"|code}}
 ```
 
+## Notes
+
+For metadata entries like `classoption` pandoc says “may be repeated for multiple options”,
+but
+```yaml
+classoption: letter
+classoption: 11pt
+```
+produces `\documentclass[11pt]{article}`.  So instead do
+```yaml
+classoption:
+  - letter
+  - 11pt
+```
+which produces the expected `\documentclass[letter,11pt]{article}`.

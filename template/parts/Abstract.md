@@ -25,10 +25,14 @@ output:
   word_document: null
 capsize: normalsize
 documentclass: article
-classoption: letter
+# usepackage:
+#   - test
+#   - name: test2
+#     opts: this,that
 # csl: ecology.csl
 # figtab_atend: no    FIXME BROKEN
 file-includes: doc-setup/extra.latex
+papersize: letter
 fontsize: 11pt
 geometry: margin=1in
 linenumbers: yes

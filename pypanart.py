@@ -133,7 +133,7 @@ class PyPanArtState(object):
             self.bib = None
 
     @staticmethod
-    def _get_context_objects(state_file, config=None, parts=None):
+    def _get_context_objects(state_file, config=None, parts=None, testing=False):
         """Return (DefaultDotDict, DefaultDotDict), being a persistent (JSON
         backed) and a runtime only object, both being shared state for make.py
         doit tasks.
@@ -144,6 +144,8 @@ class PyPanArtState(object):
 
         :param str state_file: path to state file
         :param str or list config: config files to execute for basic params
+        :param parts: FIXME: ?
+        :param bool testing: use fixed time / rev. info for testing
         :return: persistent and runtime mapping objects
         :rtype: (DefaultDotDict, DefaultDotDict)
         """
@@ -171,6 +173,12 @@ class PyPanArtState(object):
         C._metadata.run.configs = config
         C._metadata._filepath = state_file
         C._metadata.status = 'DRAFT'
+
+        if testing:
+            C._metadata.run.time = "Sun Apr 1 12:34:56 1970"
+            C._metadata.run.commit = "testingcommitstring"
+            C._metadata.run.commit_short = "testing"
+            C._metadata.status = 'TEST'
 
         try:
             if parts:

@@ -9,6 +9,9 @@
 
 \documentclass[$if(fontsize)$$fontsize$,$endif$$if(lang)$$lang$,$endif$$if(papersize)$$papersize$,$endif$$for(classoption)$$classoption$$sep$,$endfor$]{$documentclass$}
 
+$for(usepackage)$$if(usepackage.name)$\usepackage$if(usepackage.opts)$[$usepackage.opts$]$endif${$usepackage.name$}$else$\usepackage{$usepackage$}
+$endif$$endfor$
+
 \usepackage{cmap} % to avoid fi ligature translation issues in PDFs
 % \usepackage[noTex]{mmap}
 
