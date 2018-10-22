@@ -1,3 +1,5 @@
+# coding=utf-8
+
 DATA_SOURCES = dict(
     ppapts="pypanart_example/test/ppapts.csv",
 )
@@ -7,7 +9,7 @@ PARTS = 'Abstract', 'Introduction', 'Methods', 'Results', 'Discussion'
 import pypanart
 
 art = pypanart.PyPanArtState('pypanart_test_doc', DATA_SOURCES, PARTS,
-    bib=["/path/to/some.bib", "d:/alternate/path/to/some.bib"], testing=True)
+    bib=["/path/to/some.bib", "test.bib", "d:/alternate/path/to/some.bib"], testing=True)
 
 C, D = art.get_C_D()
 
@@ -103,6 +105,29 @@ def basic_plot():
     for fmt in 'png', 'pdf':
         filepath = art.image_path('basic_plot', fmt)
         plt.savefig(filepath)
+
+@art.one_task(
+    task_dep=['load_data', 'basic_math'],
+    targets=art.image_path('symbol_plot'),
+)
+def symbol_plot():
+    """
+    """
+    C.symtest.sin = '●'
+    C.symtest.cos = '◇'
+    C.symtest.smile = '☺'
+    x = np.linspace(0, 10)
+    y = np.sin(x/3)
+    plt.scatter(x, y, marker='$%s$'%C.symtest.sin, label='Sin', c='k', lw=0)
+    y = np.cos(x/3)
+    plt.scatter(x, y, marker='$%s$'%C.symtest.cos, label='Cos', c='k', lw=0)
+    y = np.cos(x/6)*0.75
+    plt.scatter(x, y, marker='$%s$'%C.symtest.smile, label='Smile', c='k', lw=0)
+    plt.legend()
+    for fmt in 'png', 'pdf':
+        filepath = art.image_path('symbol_plot', fmt)
+        plt.savefig(filepath)
+
 def main():
     """run task specified from command line"""
     run_task(globals(), sys.argv[1])

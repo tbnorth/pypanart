@@ -42,7 +42,9 @@ linenumbers: yes
 spacing: singlespacing
 abstract: |
 
-    Would be here
+    This is a test document for PyPanDoc.  It uses fake dates
+    ({{C._metadata.run.time}}) and commit IDs so the test output doesn't
+    change too often.
 
 keywords: [transparency, reproducibility, reproducible research]
 

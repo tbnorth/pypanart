@@ -343,6 +343,14 @@ $endif$
 $endif$
 
 \begin{document}
+
+$if(hide_cover)$$else$$if(cover)$
+\pagenumbering{gobble}
+$cover$
+\newpage
+\pagenumbering{arabic}
+$endif$$endif$
+
 $if(title)$
 $if(beamer)$
 \frame{\titlepage}
@@ -388,6 +396,8 @@ $abstract$
 \end{abstract}
 $endif$
 $endif$
+
+$if(keywords)${\bf Keywords:} $for(keywords)$$keywords$$sep$, $endfor$$endif$
 
 $for(include-before)$
 $include-before$

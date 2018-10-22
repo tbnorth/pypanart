@@ -480,7 +480,7 @@ class PyPanArtState(object):
         }
         source_file = 'build/tmp/%s.%s.md' % (self.basename, fmt)
         with open(source_file, 'w') as out:
-            out.write(template.render(X=X, dcb='{{').encode('utf-8'))
+            out.write(template.render(X=X, dcb='{{', open_comment='{!').encode('utf-8'))
             out.write('\n')
 
         # copy files from build/html/img to build/tmp/img in case
@@ -549,7 +549,7 @@ class PyPanArtState(object):
                 cmd.append('--include-in-header ' + tmp_file)
                 template = env.get_template('doc-setup/'+inc_i)  # don't use os.path.join()
                 with open(tmp_file, 'w') as out:
-                    out.write(template.render(X=X, C=self.C, D=self.D, dcb='{{').encode('utf-8'))
+                    out.write(template.render(X=X, C=self.C, D=self.D, dcb='{{', open_comment='{!').encode('utf-8'))
 
         # run pandoc
         cmd.append("--output build/{fmt}/{basename}.{fmt} {source_file}".format(
@@ -666,7 +666,7 @@ class PyPanArtState(object):
         with open('build/tmp/%s.md' % self.basename, 'w') as out:
             for part in self.parts:
                 template = env.get_template(os.path.basename(part+'.md'))
-                out.write(template.render(C=self.C, D=self.D, X=X, dcb='{{dcb}}').encode('utf-8'))
+                out.write(template.render(C=self.C, D=self.D, X=X, dcb='{{dcb}}', open_comment='{{open_comment}}').encode('utf-8'))
                 out.write('\n\n')
 
     def one_task(self, **kwargs):
