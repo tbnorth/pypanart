@@ -1,4 +1,3 @@
-# Abstract
 ---
 title: "PyPanArt TEST document."
 author:
@@ -6,7 +5,7 @@ author:
   email: TesterOne@example.com
   affilnum: 1
 - name: Tester T. Two
-  email: TesterTwo.com
+  email: TesterTwo@example.com
   affilnum: 2
   corresponding: True
 - name: Tester Three

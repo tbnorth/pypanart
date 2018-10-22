@@ -1,11 +1,13 @@
-DATA_SOURCES = {}
+DATA_SOURCES = dict(
+    ppapts="pypanart_example/test/ppapts.csv",
+)
 
 PARTS = 'Abstract', 'Introduction', 'Methods', 'Results', 'Discussion'
 
 import pypanart
 
-art = pypanart.PyPanArtState('pypanart_doc', DATA_SOURCES, PARTS,
-    bib=["/mnt/edata/edata/tnbbib/tnb.bib", "d:/repo/tnbbib/tnb.bib"])
+art = pypanart.PyPanArtState('pypanart_test_doc', DATA_SOURCES, PARTS,
+    bib=["/path/to/some.bib", "d:/alternate/path/to/some.bib"], testing=True)
 
 C, D = art.get_C_D()
 

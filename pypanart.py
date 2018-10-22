@@ -98,7 +98,7 @@ class PyPanArtState(object):
         return x
 
     def __init__(self, basename, data_sources, parts, bib=None,
-        config=None, setup=None):
+        config=None, setup=None, testing=False):
         """basic inputs
 
         :param str basename: basename for article, e.g. "someproj"
@@ -119,7 +119,13 @@ class PyPanArtState(object):
         self.parts = parts
         self.setup = self.as_list(setup)
         self.statefile = os.path.join('build', self.basename + '.state.json')
-        self.C, self.D = self._get_context_objects(self.statefile, config=self.as_list(config), parts=self.parts)
+        self.testing = testing
+        self.C, self.D = self._get_context_objects(
+            self.statefile,
+            config=self.as_list(config),
+            parts=self.parts,
+            testing=testing
+        )
         self.D.all_inputs = []
         self.D.all_outputs = []
         self.D.DATA = self.data_dir
@@ -381,8 +387,8 @@ class PyPanArtState(object):
         }
         inc_fmt = {  # include format for document formats
             'html': 'css',
-            'pdf': 'inc',
-            'tex': 'inc',
+            'pdf': 'tex',
+            'tex': 'tex',
         }
 
         if fmt == 'odt':
@@ -396,17 +402,24 @@ class PyPanArtState(object):
         if fmt == 'html':
             template = self.jinja_file("%s/template/doc-setup/html.template" % here)
         elif fmt in ('pdf', 'tex'):
-            template = os.path.abspath('doc-setup/manuscript.latex')
+            template = os.path.abspath('doc-setup/latex.template')
             if not os.path.exists(template):
-                template = "%s/template/doc-setup/manuscript.latex" % here
+                template = "%s/template/doc-setup/latex.template" % here
         else:
             template = ''
+        if template:
+            if os.path.exists(template):
+                template = "--template %s" % template
+            else:
+                print("WARNING: template '%s' not found" % template)
+                template = ''
+
         extra_fmt = {
             'html': [
                 "--toc", "--mathjax",
                 "--template %s" % template,
             ],
-            'pdf': ["--pdf-engine=xelatex --template %s" % template],
+            'pdf': ["--pdf-engine=xelatex %s" % template],
             'odt': [
                 "--template %s/template/doc-setup/odt.template" % here,
                 "--reference-doc %s" % odt_file,  # PD2 --reference-odt
