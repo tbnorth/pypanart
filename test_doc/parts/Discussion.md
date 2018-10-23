@@ -1,6 +1,5 @@
 # Discussion
 
 
-# References
 
 

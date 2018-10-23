@@ -1,4 +1,6 @@
 *.swp
 .doit.db
 build
+comp_images
 test_images
+reference_images
