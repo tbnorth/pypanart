@@ -1,0 +1,4 @@
+*.swp
+.doit.db
+build
+test_images

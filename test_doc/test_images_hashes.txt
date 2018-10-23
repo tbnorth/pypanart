@@ -1,0 +1,7 @@
+6e2a68d760bd37fd55b4403b67553e42f30dbb5b  test_images/pypanart_test_doc.00.pnm
+263e44e0fb5f4177ab9a2218b921e3d7950ccfea  test_images/pypanart_test_doc.01.pnm
+853da58f96028d7a3110811bf3ca845748d5f4c2  test_images/pypanart_test_doc.02.pnm
+14b5f5e7c5de0981186505a485d27e86e526961c  test_images/pypanart_test_doc.03.pnm
+80258a89c5137406f415cd667f6b580f0c2025af  test_images/pypanart_test_doc.04.pnm
+ba74dcddf3cb4052c12c8d4a7f2fae8b3058c4d0  test_images/pypanart_test_doc.05.pnm
+b95c203329729deb20e47516580e628da830ede9  test_images/pypanart_test_doc.06.pnm
