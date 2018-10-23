@@ -374,8 +374,9 @@ class PyPanArtState(object):
         :param str extra: extra params to pass to pandoc
         """
 
+        here = os.path.dirname(__file__)
         env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader('.'),
+            loader=jinja2.FileSystemLoader(['.', os.path.join(here, 'template')]),
             **JINJA_COMMON
         )
         img_fmt = {  # image format for document formats
@@ -396,7 +397,6 @@ class PyPanArtState(object):
         else:
             odt_file = ''
 
-        here = os.path.dirname(__file__)
         # FIXME look for user's modified version first
         # FIXME use generic --template <format_name>.template
         if fmt == 'html':
@@ -543,6 +543,8 @@ class PyPanArtState(object):
                 i for i in os.listdir('doc-setup')
                 if os.path.splitext(i)[-1].lower() == ext
             ]
+            if not any(os.path.basename(i).lower() == 'pypandoc_latex.tex' for i in includes):
+                includes.append(os.path.join('pypandoc_latex.tex'))
             for inc_i in includes:
                 tmp_file = os.path.splitext(inc_i)[0]+alt_ext
                 tmp_file = os.path.join('build', 'tmp', tmp_file)
