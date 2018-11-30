@@ -194,7 +194,6 @@ class PyPanArtState(object):
                     C._metadata.title = dataMap['title']
                     C._metadata.authors = ', '.join(i['name'] for i in dataMap['author'])
                     corresponding = [i for i in dataMap['author'] if i.get('corresponding')]
-                    print(corresponding)
                     if corresponding:
                         C._metadata.corresponding = "{c[email]} {c[name]} corresponding author".format(
                             c=corresponding[0])
