@@ -21,14 +21,15 @@ from subprocess import Popen, PIPE
 from defaultdotdict import DefaultDotDict
 
 import jinja2
+
+from doit.doit_cmd import DoitMain
+from doit.cmd_base import ModuleTaskLoader
+
 JINJA_COMMON = dict(
     comment_start_string="{!",
     comment_end_string="!}",
     undefined=jinja2.StrictUndefined,
 )
-
-from doit.doit_cmd import DoitMain
-from doit.cmd_base import ModuleTaskLoader
 
 try:
     import numpy as np
@@ -40,7 +41,10 @@ try:  # stop pyflakes complaining
 except NameError:
     execfile = list
 
-class OldFileFromContext(Exception): pass
+
+class OldFileFromContext(Exception):
+    pass
+
 
 class ExecutionContext(object):
     """ExecutionContext - Change os.getcwd() and sys.argv temporarily
@@ -56,7 +60,6 @@ class ExecutionContext(object):
         self.cd = cd
         self.born = time.time()
 
-
     def __enter__(self):
         self.owd = os.getcwd()
         self.argv = sys.argv
@@ -69,6 +72,7 @@ class ExecutionContext(object):
     def __exit__(self, type, value, traceback):
         os.chdir(self.owd)
         sys.argv = self.argv
+
     def check_new(self, filepath):
         """check_new - check that the given path was modified *after*
         this context was created.
@@ -81,6 +85,7 @@ class ExecutionContext(object):
         if os.stat(filepath).st_mtime < self.born:
             raise OldFileFromContext("File '%s' older than context" % filepath)
         return True
+
 
 class PyPanArtState(object):
     """PyPanArtState - Collect state for PyPanArt
@@ -97,8 +102,16 @@ class PyPanArtState(object):
             x = [x]
         return x
 
-    def __init__(self, basename, data_sources, parts, bib=None,
-        config=None, setup=None, testing=False):
+    def __init__(
+        self,
+        basename,
+        data_sources,
+        parts,
+        bib=None,
+        config=None,
+        setup=None,
+        testing=False,
+    ):
         """basic inputs
 
         :param str basename: basename for article, e.g. "someproj"
@@ -124,7 +137,7 @@ class PyPanArtState(object):
             self.statefile,
             config=self.as_list(config),
             parts=self.parts,
-            testing=testing
+            testing=testing,
         )
         self.D.all_inputs = []
         self.D.all_outputs = []
@@ -139,7 +152,9 @@ class PyPanArtState(object):
             self.bib = None
 
     @staticmethod
-    def _get_context_objects(state_file, config=None, parts=None, testing=False):
+    def _get_context_objects(
+        state_file, config=None, parts=None, testing=False
+    ):
         """Return (DefaultDotDict, DefaultDotDict), being a persistent (JSON
         backed) and a runtime only object, both being shared state for make.py
         doit tasks.
@@ -173,8 +188,8 @@ class PyPanArtState(object):
         proc = Popen('git diff-index HEAD --'.split(), stdout=PIPE)
         mods, _ = proc.communicate()
         mods = '+mods' if mods else ''
-        C._metadata.run.commit = commit.strip()+mods
-        C._metadata.run.commit_short = commit.strip()[:7]+mods
+        C._metadata.run.commit = commit.strip() + mods
+        C._metadata.run.commit_short = commit.strip()[:7] + mods
         C._metadata.run.start_time = time.asctime()
         C._metadata.run.configs = config
         C._metadata._filepath = state_file
@@ -189,17 +204,24 @@ class PyPanArtState(object):
         try:
             if parts:
                 import yaml
-                with open(os.path.join('parts', parts[0]+'.md')) as f:
+
+                with open(os.path.join('parts', parts[0] + '.md')) as f:
                     dataMap = yaml.safe_load(f)
                     C._metadata.title = dataMap['title']
-                    C._metadata.authors = ', '.join(i['name'] for i in dataMap['author'])
-                    corresponding = [i for i in dataMap['author'] if i.get('corresponding')]
+                    C._metadata.authors = ', '.join(
+                        i['name'] for i in dataMap['author']
+                    )
+                    corresponding = [
+                        i for i in dataMap['author'] if i.get('corresponding')
+                    ]
+                    fmt = "{c[email]} {c[name]} corresponding author"
                     if corresponding:
-                        C._metadata.corresponding = "{c[email]} {c[name]} corresponding author".format(
-                            c=corresponding[0])
+                        C._metadata.corresponding = fmt.format(
+                            c=corresponding[0]
+                        )
                     else:
                         C._metadata.corresponding = ""
-        except:
+        except Exception:
             print("Parsing part 0 as YAML failed")
 
         # doit inspects things looking for .create_doit_tasks and
@@ -243,7 +265,7 @@ class PyPanArtState(object):
         - hi-res versions of figures in files name figure_002.tif,
           figure_013.svg, figure_013.pdf, etc.
         - a Figure Captions section, with the captions for each figure
-        - figures printed at the end, landscape for size?  No page numbers, etc.
+        - figures printed at the end, landscape for size? No page numbers, etc.
         - as above but in separate files?  Maybe not?
 
         :param str filepath: path to file
@@ -271,8 +293,7 @@ class PyPanArtState(object):
 
         template_dict = {'tmplt': open(in_file).read().decode('utf-8')}
         env = jinja2.Environment(
-            loader=jinja2.DictLoader(template_dict),
-            **JINJA_COMMON
+            loader=jinja2.DictLoader(template_dict), **JINJA_COMMON
         )
         template = env.get_template('tmplt')
         if out_file is None:
@@ -286,7 +307,8 @@ class PyPanArtState(object):
     def image_path(self, path, format=None):
         """image_path - return path for an image format
 
-        If format is a list, return a list of paths, else return a single path (str).
+        If format is a list, return a list of paths, else return
+        a single path (str).
         If format is None, defaults to ['png', 'pdf'].
 
         :param str path: the subpath for the image
@@ -315,33 +337,45 @@ class PyPanArtState(object):
 
             for sources in source_list:
 
-                sources = sources.split(':TYPE:')[0]  # used to manage shapefiles, not here
+                sources = sources.split(':TYPE:')[
+                    0
+                ]  # used to manage shapefiles, not here
 
                 # simple eval. of "jinja like" {{expression}} substitutions
                 while '{{' in sources:
                     i = sources.index('{{')
                     j = sources.index('}}')
-                    sources = sources[:i] + eval(sources[i+2:j], {'C': self.C, 'D': self.D}) + sources[j+2:]
+                    sources = (
+                        sources[:i]
+                        + eval(sources[i + 2 : j], {'C': self.C, 'D': self.D})
+                        + sources[j + 2 :]
+                    )
 
-                if sources.lower().split('://', 1)[0] in ('http', 'https', 'ftp'):
+                if sources.lower().split('://', 1)[0] in (
+                    'http',
+                    'https',
+                    'ftp',
+                ):
                     # SINGLE FILE remote targets
                     target = os.path.join(sub_path, sources.split('/')[-1])
                     action = 'curl -o "%s" %s' % (target, sources)
                     if not os.path.exists(target):
                         yield {
-                            'name': 'curl '+target, 'targets': [target],
-                            'actions': [
-                                (make_dir, (sub_path,)),
-                                action,
-                            ],
+                            'name': 'curl ' + target,
+                            'targets': [target],
+                            'actions': [(make_dir, (sub_path,)), action],
                         }
                 else:
-                    sources = glob(os.path.splitext(sources)[0]+'*')
-                    targets = [os.path.join(sub_path, os.path.basename(source))
-                               for source in sources]
+                    sources = glob(os.path.splitext(sources)[0] + '*')
+                    targets = [
+                        os.path.join(sub_path, os.path.basename(source))
+                        for source in sources
+                    ]
                     for source, target in zip(sources, targets):
                         task = {
-                            'name': name+target, 'file_dep': [source], 'targets': [target],
+                            'name': name + target,
+                            'file_dep': [source],
+                            'targets': [target],
                             'actions': [
                                 (make_dir, (sub_path,)),
                                 (shutil.copy, (source, target)),
@@ -352,12 +386,19 @@ class PyPanArtState(object):
 
     def make_data_loader(self):
         """load_data - load global data for other tasks"""
+
         def load_global(name, D=self.D):
             self.D.all_inputs.append(self.data_path(name))
             self.D[name] = np.genfromtxt(
-                self.data_path(name), delimiter=',', names=True, dtype=None,
-                invalid_raise=False, loose=True) # , encoding=None)
+                self.data_path(name),
+                delimiter=',',
+                names=True,
+                dtype=None,
+                invalid_raise=False,
+                loose=True,
+            )  # , encoding=None)
             globals()[name] = self.D[name]
+
         for name in self.data_sources:
             if self.data_path(name).endswith('.csv') and name not in self.D:
                 yield {
@@ -375,7 +416,9 @@ class PyPanArtState(object):
 
         here = os.path.dirname(__file__)
         env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(['.', os.path.join(here, 'template')]),
+            loader=jinja2.FileSystemLoader(
+                ['.', os.path.join(here, 'template')]
+            ),
             **JINJA_COMMON
         )
         img_fmt = {  # image format for document formats
@@ -399,7 +442,9 @@ class PyPanArtState(object):
         # FIXME look for user's modified version first
         # FIXME use generic --template <format_name>.template
         if fmt == 'html':
-            template = self.jinja_file("%s/template/doc-setup/html.template" % here)
+            template = self.jinja_file(
+                "%s/template/doc-setup/html.template" % here
+            )
         elif fmt in ('pdf', 'tex'):
             template = os.path.abspath('doc-setup/latex.template')
             if not os.path.exists(template):
@@ -414,10 +459,7 @@ class PyPanArtState(object):
                 template = ''
 
         extra_fmt = {
-            'html': [
-                "--toc", "--mathjax",
-                "--template %s" % template,
-            ],
+            'html': ["--toc", "--mathjax", "--template %s" % template],
             'pdf': ["--pdf-engine=xelatex %s" % template],
             'odt': [
                 "--template %s/template/doc-setup/odt.template" % here,
@@ -433,7 +475,9 @@ class PyPanArtState(object):
                     path += ext_pick
                 if not os.path.exists(path):
                     print("NOTE: '%s' does not exist" % path)
-                relpath = os.path.relpath(path, start=self.data_dir)  # remove .data_dir
+                relpath = os.path.relpath(
+                    path, start=self.data_dir
+                )  # remove .data_dir
                 base = "build/html/img/" if fmt == 'html' else "build/tmp/img/"
                 img_path = os.path.join(base, relpath)
                 make_dir(os.path.dirname(img_path))
@@ -446,7 +490,7 @@ class PyPanArtState(object):
                 base = check = "build/tmp/img/"
             test = os.path.join(check, path)
             path = os.path.join(base, path)
-            #? self.C.path = path
+            # ? self.C.path = path
             if not os.path.exists(test):
                 path += ext_pick
                 test += ext_pick
@@ -463,23 +507,30 @@ class PyPanArtState(object):
                     ans[-1] += ' ' + word
                 else:
                     ans.append(word)
-            return '\\\n'.join("\\colorbox[HTML]{ebc631}{%s}" % i.strip() for i in ans)
+            return '\\\n'.join(
+                "\\colorbox[HTML]{ebc631}{%s}" % i.strip() for i in ans
+            )
+
         env.filters['img'] = lambda path, fmt=fmt: path_to_image(path, fmt)
         env.filters['code'] = get_code_filter
         if fmt in ('pdf', 'tex'):
             env.filters['FM'] = color_boxes
         elif fmt == 'html':
-            env.filters['FM'] = lambda text: "<span style='background: gold'>%s</span>" % text
+            env.filters['FM'] = (
+                lambda text: "<span style='background: gold'>%s</span>" % text
+            )
         else:
             env.filters['FM'] = lambda text: "**%s**" % text
 
         template = env.get_template('build/tmp/%s.md' % self.basename)
-        X = {
-            'fmt': img_fmt[fmt],
-        }
+        X = {'fmt': img_fmt[fmt]}
         source_file = 'build/tmp/%s.%s.md' % (self.basename, fmt)
         with open(source_file, 'w') as out:
-            out.write(template.render(X=X, dcb='{{', open_comment='{!').encode('utf-8'))
+            out.write(
+                template.render(X=X, dcb='{{', open_comment='{!').encode(
+                    'utf-8'
+                )
+            )
             out.write('\n')
 
         # copy files from build/html/img to build/tmp/img in case
@@ -489,7 +540,7 @@ class PyPanArtState(object):
                 filepath = os.path.join(path, filename)
                 tmp_path = os.path.join(
                     "build/tmp/img",
-                    os.path.relpath(filepath, start="build/html/img")
+                    os.path.relpath(filepath, start="build/html/img"),
                 )
                 if not os.path.exists(os.path.dirname(tmp_path)):
                     make_dir(os.path.dirname(tmp_path))
@@ -504,12 +555,13 @@ class PyPanArtState(object):
             for n, fig in enumerate(figs):
                 shutil.copyfile(
                     fig['file'],
-                    "%s/figure_%04d%s" % (figures, n+1, os.path.splitext(fig['file'])[-1])
+                    "%s/figure_%04d%s"
+                    % (figures, n + 1, os.path.splitext(fig['file'])[-1]),
                 )
             with open(source_file, 'a') as out:
                 out.write("\n\\newpage\n\n# Figure captions\n\n")
                 for n, fig in enumerate(figs):
-                    out.write("Figure %d: %s\n\n" % (n+1, fig['caption']))
+                    out.write("Figure %d: %s\n\n" % (n + 1, fig['caption']))
                 out.write("\n\n\\newpage\n\n")
         with open(source_file, 'a') as out:
             out.write("\n\n# References\n\n")
@@ -523,12 +575,17 @@ class PyPanArtState(object):
         cmd.extend(extra_fmt.get(fmt, []))
 
         filters = "/home/tbrown/.local/lib/python2.7/site-packages"
-        if not os.path.exists(filters+"/pandoc_fignos.py"):
-            filters = "C:/Users/tbrown02/AppData/Roaming/Python/Python27/site-packages"
+        if not os.path.exists(filters + "/pandoc_fignos.py"):
+            filters = ("C:/Users/tbrown02/AppData/Roaming/Python/"
+                       "Python27/site-packages")
         if not os.path.exists(filters):
             filters = ""
         for filter_ in 'pandoc-fignos', 'pandoc-eqnos', 'pandoc-tablenos':
-            filter_ = ("%s/%s.py" % (filters, filter_.replace('-', '_'))) if filters else filter_
+            filter_ = (
+                ("%s/%s.py" % (filters, filter_.replace('-', '_')))
+                if filters
+                else filter_
+            )
             cmd.append('--filter %s' % filter_)
 
         cmd.append('--filter pandoc-citeproc')  # after other filters
@@ -539,22 +596,39 @@ class PyPanArtState(object):
             ext = '.' + inc_fmt[fmt]
             alt_ext = "._%s" % inc_fmt[fmt]
             includes = [
-                i for i in os.listdir('doc-setup')
+                i
+                for i in os.listdir('doc-setup')
                 if os.path.splitext(i)[-1].lower() == ext
             ]
-            if not any(os.path.basename(i).lower() == 'pypandoc_latex.tex' for i in includes):
+            if not any(
+                os.path.basename(i).lower() == 'pypandoc_latex.tex'
+                for i in includes
+            ):
                 includes.append(os.path.join('pypandoc_latex.tex'))
             for inc_i in includes:
-                tmp_file = os.path.splitext(inc_i)[0]+alt_ext
+                tmp_file = os.path.splitext(inc_i)[0] + alt_ext
                 tmp_file = os.path.join('build', 'tmp', tmp_file)
                 cmd.append('--include-in-header ' + tmp_file)
-                template = env.get_template('doc-setup/'+inc_i)  # don't use os.path.join()
+                template = env.get_template(
+                    'doc-setup/' + inc_i
+                )  # don't use os.path.join()
                 with open(tmp_file, 'w') as out:
-                    out.write(template.render(X=X, C=self.C, D=self.D, dcb='{{', open_comment='{!').encode('utf-8'))
+                    out.write(
+                        template.render(
+                            X=X,
+                            C=self.C,
+                            D=self.D,
+                            dcb='{{',
+                            open_comment='{!',
+                        ).encode('utf-8')
+                    )
 
         # run pandoc
-        cmd.append("--output build/{fmt}/{basename}.{fmt} {source_file}".format(
-            fmt=fmt, basename=self.basename, source_file=source_file))
+        cmd.append(
+            "--output build/{fmt}/{basename}.{fmt} {source_file}".format(
+                fmt=fmt, basename=self.basename, source_file=source_file
+            )
+        )
         print(" \\\n    ".join(cmd))
         cmd = ' '.join(cmd)
         make_dir("build/%s" % fmt)
@@ -563,11 +637,13 @@ class PyPanArtState(object):
     def make_formats(self, file_dep=None, task_dep=None):
         file_dep = file_dep or []
         task_dep = task_dep or []
-        file_dep += self.D.all_outputs + ['parts/%s.md'%i for i in self.parts]
+        file_dep += self.D.all_outputs + [
+            'parts/%s.md' % i for i in self.parts
+        ]
         """use fmt:pdf, fmt:html, docx, odt, etc."""
         yield {
             'name': 'md',
-            'actions': [(self.make_markdown, )],
+            'actions': [(self.make_markdown,)],
             'verbosity': 2,
             'file_dep': file_dep,
             'task_dep': task_dep,
@@ -587,9 +663,9 @@ class PyPanArtState(object):
     def make_images(self):
         """make png / pdf figures from svg sources
 
-        NOTE: files made / copied to build/html/img will be copied to build/tmp/img
-        lated (currently in make_fmt()) to make them available for other formats
-        like .odt.
+        NOTE: files made / copied to build/html/img will be copied to
+        build/tmp/img later (currently in make_fmt()) to make them
+        available for other formats like .odt.
         """
         inkscape = 'inkscape'
         if sys.platform == 'win32':
@@ -598,16 +674,27 @@ class PyPanArtState(object):
             dirs[:] = [i for i in dirs if i != 'base']
             for filename in files:
                 if filename[-4:].lower() == '.svg':
-                    for out_path, format in (('build/html', 'png'), ('build/tmp', 'pdf')):
+                    for out_path, format in (
+                        ('build/html', 'png'),
+                        ('build/tmp', 'pdf'),
+                    ):
                         src = os.path.join(path, filename)
-                        out = os.path.join(out_path, path, filename[:-4]+'.'+format)
+                        out = os.path.join(
+                            out_path, path, filename[:-4] + '.' + format
+                        )
                         yield {
                             'name': "%s from %s" % (format, src),
                             'actions': [
                                 (make_dir, (os.path.join(out_path, path),)),
-                                ("{inkscape} --export-{format}={out} --without-gui "
-                                 "--export-area-page {svg}").format(
-                                svg=src, out=out, format=format, inkscape=inkscape),
+                                (
+                                    "{inkscape} --export-{format}={out} "
+                                    "--without-gui --export-area-page {svg}"
+                                ).format(
+                                    svg=src,
+                                    out=out,
+                                    format=format,
+                                    inkscape=inkscape,
+                                ),
                             ],
                             'file_dep': [src],
                             'targets': [out],
@@ -658,16 +745,21 @@ class PyPanArtState(object):
         env.filters['pipe_table'] = pipe_table
         env.filters['FM'] = lambda text: '{{"%s"|FM}}' % text
 
-        X = {
-            'fmt': '{{X.fmt}}',
-            'now': time.asctime(),
-        }
+        X = {'fmt': '{{X.fmt}}', 'now': time.asctime()}
 
         make_dir('build/tmp')
         with open('build/tmp/%s.md' % self.basename, 'w') as out:
             for part in self.parts:
-                template = env.get_template(os.path.basename(part+'.md'))
-                out.write(template.render(C=self.C, D=self.D, X=X, dcb='{{dcb}}', open_comment='{{open_comment}}').encode('utf-8'))
+                template = env.get_template(os.path.basename(part + '.md'))
+                out.write(
+                    template.render(
+                        C=self.C,
+                        D=self.D,
+                        X=X,
+                        dcb='{{dcb}}',
+                        open_comment='{{open_comment}}',
+                    ).encode('utf-8')
+                )
                 out.write('\n\n')
 
     def one_task(self, **kwargs):
@@ -686,13 +778,16 @@ class PyPanArtState(object):
 
         if 'targets' in kwargs:
             self.D.all_outputs.extend(kwargs['targets'])
+
         def one_task_maker(function):
             def function_task():
-                d = {'actions':[function]}
+                d = {'actions': [function]}
                 d.update(kwargs)
                 return d
+
             function_task.create_doit_tasks = function_task
             return function_task
+
         return one_task_maker
 
     def preprocess_odt(self):
@@ -702,7 +797,9 @@ class PyPanArtState(object):
         odt_dir = tempfile.mkdtemp()
         here = os.path.dirname(__file__)
         # FIXME look for user's modified version first
-        zipfile.ZipFile('%s/template/doc-setup/odt.reference' % here).extractall(odt_dir)
+        zipfile.ZipFile(
+            '%s/template/doc-setup/odt.reference' % here
+        ).extractall(odt_dir)
 
         # run template substitution on it
         # not sure how to instanciate jinja2.FileSystemLoader from filesystem
@@ -711,8 +808,7 @@ class PyPanArtState(object):
         styles_new = os.path.join(odt_dir, 'styles_new.xml')
         template_dict = {'styles': open(styles_old).read().decode('utf-8')}
         env = jinja2.Environment(
-            loader=jinja2.DictLoader(template_dict),
-            **JINJA_COMMON
+            loader=jinja2.DictLoader(template_dict), **JINJA_COMMON
         )
         template = env.get_template('styles')
         with open(styles_new, 'w') as out:
@@ -728,7 +824,7 @@ class PyPanArtState(object):
                     continue
                 zip_file.write(
                     os.path.join(path, filename),
-                    os.path.relpath(os.path.join(path, filename), odt_dir)
+                    os.path.relpath(os.path.join(path, filename), odt_dir),
                 )
         zip_file.close()
 
@@ -750,7 +846,12 @@ class PyPanArtState(object):
         finally:
             del self.C['create_doit_tasks']  # see get_context_objects()
             make_dir(os.path.dirname(self.C._metadata._filepath))
-            json.dump(self.C, open(self.C._metadata._filepath, 'w'), indent=2, sort_keys=True)
+            json.dump(
+                self.C,
+                open(self.C._metadata._filepath, 'w'),
+                indent=2,
+                sort_keys=True,
+            )
             print("Results in '%s'" % self.C._metadata._filepath)
 
 
@@ -762,6 +863,7 @@ def make_dir(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
+
 def run_task(module, task):
     """
     run_task - Have doit run the named task
@@ -771,7 +873,8 @@ def run_task(module, task):
     """
     start = time.time()
     DoitMain(ModuleTaskLoader(module)).run([task])
-    print("%.2f seconds" % (time.time()-start))
+    print("%.2f seconds" % (time.time() - start))
+
 
 def get_lines(tree, name):
     """
@@ -789,7 +892,7 @@ def get_lines(tree, name):
     names = [getattr(i, 'name', None) for i in childs]
     if name in names:
         idx = names.index(name)
-        end = linenos[idx+1] if idx < len(linenos) - 1 else None
+        end = linenos[idx + 1] if idx < len(linenos) - 1 else None
         return linenos[idx], end
 
     # assignments
@@ -797,7 +900,7 @@ def get_lines(tree, name):
     names = [[getattr(i, 'id', None) for i in j] for j in targets]
     for idx, name_list in enumerate(names):
         if name in name_list:
-            end = linenos[idx+1] if idx < len(linenos) - 1 else None
+            end = linenos[idx + 1] if idx < len(linenos) - 1 else None
             return linenos[idx], end
 
     for child in childs:
@@ -805,6 +908,7 @@ def get_lines(tree, name):
         if start:
             return start, end
     return None, None
+
 
 def get_code(source, name):
     """get_code - get the lines of code from source that defines name
@@ -823,8 +927,9 @@ def get_code(source, name):
     if not start:
         return "FAIL: DID NOT FIND '%s' IN '%s'" % (name, source)
     if end is None:
-        end = len(text)+1  # AstNode.lineno is 1 based
-    return '\n'.join(text[start-1:end-1])
+        end = len(text) + 1  # AstNode.lineno is 1 based
+    return '\n'.join(text[start - 1 : end - 1])
+
 
 def get_code_filter(source_name):
     """get_code_filter - Jinja filter interface to get_code()
@@ -836,5 +941,3 @@ def get_code_filter(source_name):
 
     source, name = source_name.split()
     return get_code(source, name)
-
-
