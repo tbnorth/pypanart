@@ -30,7 +30,7 @@ search = re.compile(URL_RE)
 def get_urls(stream):
     for line_n, line in enumerate(stream):
         for match in search.finditer(line):
-            yield line_n, match.group()
+            yield line_n+1, match.group()
 
 
 now = time.time()
@@ -67,7 +67,7 @@ for line_n, url in get_urls(sys.stdin):
         info['ok'] = True
         info['time'] = now
     else:
-        print(url)
+        print(line_n, url)
         info['ok'] = False
         print("  %s status %s" % (url, status_code))
 
