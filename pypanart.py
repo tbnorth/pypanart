@@ -575,16 +575,16 @@ class PyPanArtState(object):
                     "%s/number/figure_%04d%s"
                     % (figures, n + 1, ext),
                 )
-                shutil.copyfile(
-                    fig['file'],
-                    "%s/name/%s"
-                    % (figures, os.path.basename(fig['file'])),
+                outfile = "%s/name/%s" % (
+                    figures, os.path.basename(fig['file'])
                 )
-                shutil.copyfile(
-                    fig['file'],
-                    "%s/latex/%s%s"
-                    % (figures, name.replace('.', '_'), ext),
+                assert not os.path.exists(outfile), outfile
+                shutil.copyfile(fig['file'], outfile)
+                outfile = "%s/latex/%s%s" % (
+                    figures, name.replace('.', '_'), ext
                 )
+                assert not os.path.exists(outfile), outfile
+                shutil.copyfile(fig['file'], outfile)
 
             # at this point, if prepping for latex, rewrite markdown with no
             # paths and at most one dot in figure paths, could not do this
@@ -594,8 +594,9 @@ class PyPanArtState(object):
                 def latex_to_image(path, fmt):
                     path = path_to_image(path, fmt)
                     name, ext = os.path.splitext(os.path.basename(path))
-                    return name.replace('.', '_') + ext
-                filters['img'] = lambda path, fmt=fmt: latex_to_image(path, fmt)
+                    return "fig/" + name.replace('.', '_') + ext
+                filters['img'] = lambda path, fmt=fmt: \
+                    latex_to_image(path, fmt)
                 env = self.make_env(here, filters)
                 template = env.get_template('build/tmp/%s.md' % self.basename)
                 with open(source_file, 'w') as out:
@@ -692,6 +693,7 @@ class PyPanArtState(object):
         if os.path.exists(outdir):
             shutil.rmtree(outdir)
         os.makedirs(outdir)
+        os.makedirs(outdir+'/fig')
         if os.path.exists(self.bib):
             shutil.copyfile(
                 self.bib,
@@ -702,12 +704,11 @@ class PyPanArtState(object):
                 os.path.join(outdir, "%s.tex" % self.basename)
             )
             for filename in os.listdir('build/figures/latex'):
-                filepath = os.path.join('build/figures/latex', filename)
-                if os.path.isfile(filepath):
-                    shutil.copyfile(
-                        filepath,
-                        os.path.join(outdir, os.path.basename(filepath))
-                    )
+                filepath = os.path.join('build/latex/fig', filename)
+                shutil.copyfile(
+                    filepath,
+                    os.path.join(outdir, os.path.basename(filepath))
+                )
 
         return
 
