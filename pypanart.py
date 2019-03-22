@@ -407,20 +407,32 @@ class PyPanArtState(object):
                     'task_dep': ['collect_data'],
                 }
 
-    def make_fmt(self, fmt):
-        """make_fmt - make html, pdf, docx, odt, etc. output
+    def make_env(self, here, filters):
 
-        :param str fmt: format to make
-        :param str extra: extra params to pass to pandoc
-        """
-
-        here = os.path.dirname(__file__)
         env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(
                 ['.', os.path.join(here, 'template')]
             ),
             **JINJA_COMMON
         )
+        for k, v in filters.items():
+            env.filters[k] = v
+        return env
+
+
+    def make_fmt(self, fmt, for_latex=False):
+        """make_fmt - make html, pdf, docx, odt, etc. output
+
+        :param str fmt: format to make
+        :param str extra: extra params to pass to pandoc
+        """
+
+        if fmt == 'latex':
+            self.make_fmt('tex', for_latex=True)
+            self.make_fmt_latex()
+            return
+
+        here = os.path.dirname(__file__)
         img_fmt = {  # image format for document formats
             'odt': 'png',
             'html': 'png',
@@ -496,7 +508,14 @@ class PyPanArtState(object):
                 test += ext_pick
             if not os.path.exists(test):
                 print("WARNING: '%s' does not exist" % test)
+
+            if path_to_image.for_latex:
+                name, ext = os.path.splitext(os.path.basename(path))
+                path = name.replace('.', '_') + ext
+
             return path
+
+        path_to_image.for_latex = False
 
         def color_boxes(text):
             """\colorbox{foo} doesn't wrap, and \hl{foo} from \usepackage{soul}
@@ -511,16 +530,19 @@ class PyPanArtState(object):
                 "\\colorbox[HTML]{ebc631}{%s}" % i.strip() for i in ans
             )
 
-        env.filters['img'] = lambda path, fmt=fmt: path_to_image(path, fmt)
-        env.filters['code'] = get_code_filter
+        filters = {
+            'img': lambda path, fmt=fmt: path_to_image(path, fmt),
+            'code': get_code_filter,
+        }
         if fmt in ('pdf', 'tex'):
-            env.filters['FM'] = color_boxes
+            filters['FM'] = color_boxes
         elif fmt == 'html':
-            env.filters['FM'] = (
+            filters['FM'] = (
                 lambda text: "<span style='background: gold'>%s</span>" % text
             )
         else:
-            env.filters['FM'] = lambda text: "**%s**" % text
+            filters['FM'] = lambda text: "**%s**" % text
+        env = self.make_env(here, filters)
 
         template = env.get_template('build/tmp/%s.md' % self.basename)
         X = {'fmt': img_fmt[fmt]}
@@ -551,13 +573,44 @@ class PyPanArtState(object):
             figures = 'build/figures'
             if os.path.exists(figures):
                 shutil.rmtree(figures)
-            make_dir(figures)
+            for subdir in 'number', 'name', 'latex':
+                make_dir(os.path.join(figures, subdir))
             for n, fig in enumerate(figs):
+                name, ext = os.path.splitext(os.path.basename(fig['file']))
                 shutil.copyfile(
                     fig['file'],
-                    "%s/figure_%04d%s"
-                    % (figures, n + 1, os.path.splitext(fig['file'])[-1]),
+                    "%s/number/figure_%04d%s"
+                    % (figures, n + 1, ext),
                 )
+                shutil.copyfile(
+                    fig['file'],
+                    "%s/name/%s"
+                    % (figures, os.path.basename(fig['file'])),
+                )
+                shutil.copyfile(
+                    fig['file'],
+                    "%s/latex/%s%s"
+                    % (figures, name.replace('.', '_'), ext),
+                )
+
+            # at this point, if prepping for latex, rewrite markdown with no
+            # paths and at most one dot in figure paths, could not do this
+            # before because we read the source file to find the figures
+            # present
+            if for_latex:
+                path_to_image.for_latex = True
+                env = self.make_env(here, filters)
+                template = env.get_template('build/tmp/%s.md' % self.basename)
+                with open(source_file, 'w') as out:
+                    out.write(
+                        template.render(
+                            X=X,
+                            dcb='{{',
+                            open_comment='{!',
+                        ).encode('utf-8')
+                    )
+                    out.write('\n')
+
             with open(source_file, 'a') as out:
                 out.write("\n\\newpage\n\n# Figure captions\n\n")
                 for n, fig in enumerate(figs):
@@ -567,6 +620,8 @@ class PyPanArtState(object):
             out.write("\n\n# References\n\n")
 
         cmd = ['pandoc', '--standalone', '--from markdown-fancy_lists']
+        if for_latex:
+            cmd.append('--natbib')
         # PD2 '--smart',
 
         if self.bib:
@@ -634,6 +689,31 @@ class PyPanArtState(object):
         make_dir("build/%s" % fmt)
         Popen(cmd.split()).wait()
 
+    def make_fmt_latex(self):
+        """Move files around for vanilla latex"""
+        outdir = 'build/latex'
+        if os.path.exists(outdir):
+            shutil.rmtree(outdir)
+        os.makedirs(outdir)
+        if os.path.exists(self.bib):
+            shutil.copyfile(
+                self.bib,
+                os.path.join(outdir, os.path.basename(self.bib))
+            )
+            shutil.copyfile(
+                "build/tex/%s.tex" % self.basename,
+                os.path.join(outdir, "%s.tex" % self.basename)
+            )
+            for filename in os.listdir('build/figures/latex'):
+                filepath = os.path.join('build/figures/latex', filename)
+                if os.path.isfile(filepath):
+                    shutil.copyfile(
+                        filepath,
+                        os.path.join(outdir, os.path.basename(filepath))
+                    )
+
+        return
+
     def make_formats(self, file_dep=None, task_dep=None):
         file_dep = file_dep or []
         task_dep = task_dep or []
@@ -650,7 +730,7 @@ class PyPanArtState(object):
             'targets': ['build/tmp/%s.md' % self.basename],
         }
         file_dep += ['build/tmp/%s.md' % self.basename]
-        for fmt in 'html pdf odt docx tex'.split():
+        for fmt in 'html pdf odt docx tex latex'.split():
             yield {
                 'name': fmt,
                 'actions': [(self.make_fmt, (fmt,))],
