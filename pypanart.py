@@ -419,7 +419,6 @@ class PyPanArtState(object):
             env.filters[k] = v
         return env
 
-
     def make_fmt(self, fmt, for_latex=False):
         """make_fmt - make html, pdf, docx, odt, etc. output
 
@@ -509,13 +508,7 @@ class PyPanArtState(object):
             if not os.path.exists(test):
                 print("WARNING: '%s' does not exist" % test)
 
-            if path_to_image.for_latex:
-                name, ext = os.path.splitext(os.path.basename(path))
-                path = name.replace('.', '_') + ext
-
             return path
-
-        path_to_image.for_latex = False
 
         def color_boxes(text):
             """\colorbox{foo} doesn't wrap, and \hl{foo} from \usepackage{soul}
@@ -598,7 +591,11 @@ class PyPanArtState(object):
             # before because we read the source file to find the figures
             # present
             if for_latex:
-                path_to_image.for_latex = True
+                def latex_to_image(path, fmt):
+                    path = path_to_image(path, fmt)
+                    name, ext = os.path.splitext(os.path.basename(path))
+                    return name.replace('.', '_') + ext
+                filters['img'] = lambda path, fmt=fmt: latex_to_image(path, fmt)
                 env = self.make_env(here, filters)
                 template = env.get_template('build/tmp/%s.md' % self.basename)
                 with open(source_file, 'w') as out:
