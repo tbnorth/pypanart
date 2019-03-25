@@ -699,16 +699,15 @@ class PyPanArtState(object):
                 self.bib,
                 os.path.join(outdir, os.path.basename(self.bib))
             )
+        shutil.copyfile(
+            "build/tex/%s.tex" % self.basename,
+            os.path.join(outdir, "%s.tex" % self.basename)
+        )
+        for filename in os.listdir('build/figures/latex'):
             shutil.copyfile(
-                "build/tex/%s.tex" % self.basename,
-                os.path.join(outdir, "%s.tex" % self.basename)
+                os.path.join('build/figures/latex', filename),
+                os.path.join(outdir+'/fig', filename)
             )
-            for filename in os.listdir('build/figures/latex'):
-                filepath = os.path.join('build/latex/fig', filename)
-                shutil.copyfile(
-                    filepath,
-                    os.path.join(outdir, os.path.basename(filepath))
-                )
 
         return
 
