@@ -143,13 +143,14 @@ class PyPanArtState(object):
         self.D.all_outputs = []
         self.D.DATA = self.data_dir
         # use the first bibliography file found
-        bib = [i for i in self.as_list(bib) or [] if os.path.exists(i)]
-        if bib:
-            self.bib = bib[0]
+        bib = self.as_list(bib)
+        extant = [i for i in (bib or []) if os.path.exists(i)]
+        if extant:
+            self.bib = extant[0]
             # output formats depehd on D.all_outputs, so append to that
             self.D.all_outputs.append(self.bib)
         else:
-            self.bib = None
+            self.bib = bib[0]  # perhaps it will be generated
 
     @staticmethod
     def _get_context_objects(
