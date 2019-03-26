@@ -619,8 +619,6 @@ class PyPanArtState(object):
             out.write("\n\n# References\n\n")
 
         cmd = ['pandoc', '--standalone', '--from markdown-fancy_lists']
-        if for_latex:
-            cmd.append('--natbib')
         # PD2 '--smart',
 
         if self.bib:
@@ -642,7 +640,11 @@ class PyPanArtState(object):
             )
             cmd.append('--filter %s' % filter_)
 
-        cmd.append('--filter pandoc-citeproc')  # after other filters
+        if for_latex:
+            cmd.append('--natbib')
+        else:
+            cmd.append('--filter pandoc-citeproc')  # after other filters
+
         cmd.append('--from markdown+pipe_tables')
 
         # pass include files through template processor and add to cmd. line
