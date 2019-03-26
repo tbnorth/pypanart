@@ -471,7 +471,7 @@ class PyPanArtState(object):
                 template = ''
 
         extra_fmt = {
-            'html': ["--toc", "--mathjax", "--template %s" % template],
+            'html': ["--toc", "--mathjax", template],
             'pdf': ["--pdf-engine=xelatex %s" % template],
             'odt': [
                 "--template %s/template/doc-setup/odt.template" % here,
@@ -622,7 +622,7 @@ class PyPanArtState(object):
         # PD2 '--smart',
 
         if self.bib:
-            cmd.append('--metadata bibliography="%s"' % self.bib)
+            cmd.append('--metadata bibliography=%s' % self.bib)
 
         cmd.extend(extra_fmt.get(fmt, []))
 
@@ -656,7 +656,7 @@ class PyPanArtState(object):
                 for i in os.listdir('doc-setup')
                 if os.path.splitext(i)[-1].lower() == ext
             ]
-            if not any(
+            if fmt in ('tex', 'latex', 'pdf') and not any(
                 os.path.basename(i).lower() == 'pypandoc_latex.tex'
                 for i in includes
             ):
