@@ -1,0 +1,12 @@
+matplotlib
+jinja2
+# scipy
+# rtree
+# pyyaml
+# pandoc
+# pandas
+# numpy
+# netCDF4
+# gdal
+# cartopy
+# bsddb

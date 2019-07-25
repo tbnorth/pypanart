@@ -1,0 +1,6 @@
+pandoc-tablenos
+pandoc-fignos
+pandoc-eqnos
+doit==0.29
+bibtexparser
+# openpyxl
