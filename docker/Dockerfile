@@ -1,41 +1,26 @@
 FROM thomasweise/docker-texlive-full
 # 1.5 Gb, big download
 
-RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-        -O ~/miniconda.sh &&\
-    bash ~/miniconda.sh -b -p ~/miniconda &&\
-    rm ~/miniconda.sh
-
 COPY requirements.conda.txt requirements.pip.txt ./
 
 SHELL ["/bin/bash", "-c"]
 
-RUN echo 'export PATH=~/miniconda/bin:$PATH' >>~/.bashrc &&\
+RUN apt-get update &&\
+    apt-get install -y gcc inkscape git &&\
+    # gcc needed by pip
+    # git and inkscape needed by pypanart
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+        -O ~/miniconda.sh &&\
+    bash ~/miniconda.sh -b -p ~/miniconda &&\
+    rm ~/miniconda.sh &&\
+    echo 'export PATH=~/miniconda/bin:$PATH' >>~/.bashrc &&\
     PATH=~/miniconda/bin:$PATH &&\
     conda update conda &&\
-    conda create --yes --name pypanart 'python<3'
-
-RUN apt-get update &&\
-    apt-get install -y gcc inkscape
-
-RUN PATH=~/miniconda/bin:$PATH &&\
+    conda create --yes --name pypanart -c conda-forge 'python<3' &&\
+    PATH=~/miniconda/bin:$PATH &&\
     source activate pypanart &&\
-    pip install -r requirements.pip.txt &&\
-    grep -v '#' requirements.conda.txt | xargs conda install -c conda-forge
-
-RUN PATH=~/miniconda/bin:$PATH &&\
-    source activate pypanart &&\
-    conda install pandoc
-
-RUN apt-get install -y git 
-
-RUN PATH=~/miniconda/bin:$PATH &&\
-    source activate pypanart &&\
-    conda install -c conda-forge scipy
-
-RUN PATH=~/miniconda/bin:$PATH &&\
-    source activate pypanart &&\
-    conda install -c conda-forge pyyaml
+    grep -v '#' requirements.conda.txt | xargs conda install -c conda-forge &&\
+    pip install -r requirements.pip.txt
 
 # USER root
 # COPY entrypoint.sh /root/
