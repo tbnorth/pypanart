@@ -420,6 +420,29 @@ class PyPanArtState(object):
             env.filters[k] = v
         return env
 
+    def get_includes(self, fmt, ext):
+        includes = []
+        if os.path.exists('doc-setup'):
+            includes += [
+                i
+                for i in os.listdir('doc-setup')
+                if os.path.splitext(i)[-1].lower() == ext
+            ]
+        seen = [os.path.basename(i) for i in includes]
+        includes += [
+            i
+            for i in os.listdir(os.path.join(
+                os.path.dirname(__file__), 'template', 'doc-setup'))
+            if os.path.splitext(i)[-1].lower() == ext
+               and os.path.basename(i) not in seen
+        ]
+        if fmt in ('tex', 'latex', 'pdf') and not any(
+            os.path.basename(i).lower() == 'pypandoc_latex.tex'
+            for i in includes
+        ):
+            includes.append(os.path.join('pypandoc_latex.tex'))
+        return includes
+
     def make_fmt(self, fmt, for_latex=False):
         """make_fmt - make html, pdf, docx, odt, etc. output
 
@@ -651,16 +674,7 @@ class PyPanArtState(object):
         if fmt in inc_fmt:
             ext = '.' + inc_fmt[fmt]
             alt_ext = "._%s" % inc_fmt[fmt]
-            includes = [
-                i
-                for i in os.listdir('doc-setup')
-                if os.path.splitext(i)[-1].lower() == ext
-            ]
-            if fmt in ('tex', 'latex', 'pdf') and not any(
-                os.path.basename(i).lower() == 'pypandoc_latex.tex'
-                for i in includes
-            ):
-                includes.append(os.path.join('pypandoc_latex.tex'))
+            includes = self.get_includes(fmt, ext)
             for inc_i in includes:
                 tmp_file = os.path.splitext(inc_i)[0] + alt_ext
                 tmp_file = os.path.join('build', 'tmp', tmp_file)
