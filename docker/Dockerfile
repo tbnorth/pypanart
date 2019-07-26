@@ -15,12 +15,20 @@ RUN apt-get update &&\
     rm ~/miniconda.sh &&\
     echo 'export PATH=~/miniconda/bin:$PATH' >>~/.bashrc &&\
     PATH=~/miniconda/bin:$PATH &&\
-    conda update conda &&\
+    conda update conda
+
+# the break here allows common base for Python 2 and 3 branches
+
+# make 'python' on next line 'python<3' to build for 2.7
+RUN PATH=~/miniconda/bin:$PATH &&\
     conda create --yes --name pypanart -c conda-forge 'python<3' &&\
-    PATH=~/miniconda/bin:$PATH &&\
     source activate pypanart &&\
     grep -v '#' requirements.conda.txt | xargs conda install -c conda-forge &&\
-    pip install -r requirements.pip.txt
+    pip install -r requirements.pip.txt &&\
+    # use 2.9.0 for python<3 else current
+    pip install doit==2.9.0
+    # pip install doit
+
 
 # USER root
 # COPY entrypoint.sh /root/
