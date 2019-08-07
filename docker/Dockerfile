@@ -11,24 +11,43 @@ RUN apt-get update &&\
     # git and inkscape needed by pypanart
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
         -O ~/miniconda.sh &&\
-    bash ~/miniconda.sh -b -p ~/miniconda &&\
+    bash ~/miniconda.sh -b -p /miniconda &&\
     rm ~/miniconda.sh &&\
-    echo 'export PATH=~/miniconda/bin:$PATH' >>~/.bashrc &&\
-    PATH=~/miniconda/bin:$PATH &&\
+    echo 'export PATH=/miniconda/bin:$PATH' >>~/.bashrc &&\
+    PATH=/miniconda/bin:$PATH &&\
     conda update conda
 
 # the break here allows common base for Python 2 and 3 branches
 
+ARG PYVER=3
+
 # make 'python' on next line 'python<3' to build for 2.7
-RUN PATH=~/miniconda/bin:$PATH &&\
-    conda create --yes --name pypanart -c conda-forge 'python<3' &&\
+RUN PATH=/miniconda/bin:$PATH &&\
+    PYBELOW=$[${PYVER}+1] &&\
+    conda create --yes --name pypanart -c conda-forge "python<$PYBELOW" &&\
     source activate pypanart &&\
     grep -v '#' requirements.conda.txt | xargs conda install -c conda-forge &&\
     pip install -r requirements.pip.txt &&\
-    # use 2.9.0 for python<3 else current
-    pip install doit==2.9.0
-    # pip install doit
+    # use 0.29.0 for python<3 else current
+    [ ${PYVER} -eq 2 ] && DOITVER===0.29.0 || DOITVER='' &&\
+    pip install doit$DOITVER &&\
+    chmod -R a+rwx /miniconda
 
+# RUN PATH=/miniconda/bin:$PATH &&\
+#     conda install -c conda-forge bsddb
+# RUN PATH=/miniconda/bin:$PATH &&\
+#     pip install bsddb
+
+# ENV PATH /miniconda/bin:$PATH
+#     echo "export PYTHONPATH=/repo/pypanart" >> /etc/environment &&\
+#     echo "source activate pypanart" >> /etc/environment
+
+COPY entrypoint.sh /root/
+ENTRYPOINT ["bash", "/root/entrypoint.sh"]
+
+# screen nano git gcc wget bzip2
+
+# USER n3muser
 
 # USER root
 # COPY entrypoint.sh /root/

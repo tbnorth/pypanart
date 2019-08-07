@@ -1,4 +1,3 @@
-# Abstract
 ---
 title: "PyPanArt TEST document."
 author:
