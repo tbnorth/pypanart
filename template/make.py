@@ -1,93 +1,74 @@
-DATA_SOURCES = {}
+DATA_SOURCES = {
+    'ppapts': "pypanart_example/test/ppapts.csv",
+}
 
 PARTS = 'Abstract', 'Introduction', 'Methods', 'Results', 'Discussion'
 
 import pypanart
 
-art = pypanart.PyPanArtState('pypanart_doc', DATA_SOURCES, PARTS,
-    bib=["/mnt/edata/edata/tnbbib/tnb.bib", "d:/repo/tnbbib/tnb.bib"])
+art = pypanart.PyPanArtState(
+    'pypanart_doc',
+    DATA_SOURCES,
+    PARTS,
+    bib=["/mnt/edata/edata/tnbbib/tnb.bib", "d:/repo/tnbbib/tnb.bib"],
+)
 
 C, D = art.get_C_D()
 
-import os
-import shutil
 import sys
-
-from glob import glob
-from subprocess import Popen
 
 import numpy as np
 
 try:
-    import matplotlib.pyplot as plt
     import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
     matplotlib.rc('font', family='DejaVu Sans, Arial')
     import scipy.stats
 except ImportError:
     plt = None
 
-from pypanart import run_task, make_dir
+from pypanart import run_task
 
 # START: PyPanArt standard tasks
 
-def task_collect_data():
-    """add `collect_data` task from pypanart
 
-    This is 1/3 boiler plate functions that must occur in PyPanArt
-    make.py files.
-    """
+def task_collect_data():
+    """add `collect_data` task from pypanart"""
     yield art.make_data_collector()
 
-def task_load_data():
-    """add `load_data` task from pypanart
 
-    This is 2/3 boiler plate functions that must occur in PyPanArt
-    make.py files.
-    """
+def task_load_data():
+    """add `load_data` task from pypanart"""
     yield art.make_data_loader()
+
 
 def task_fmt():
     """add `fmt:pdf` etc. tasks from pypanart"""
     yield art.make_formats()
 
-def task_img():
-    """add `img` task from pypanart
 
-    This is 3/3 boiler plate functions that must occur in PyPanArt
-    make.py files.
-    """
+def task_img():
+    """add `img` task from pypanart"""
     yield art.make_images()
+
 
 # END: PyPanArt standard tasks
 
+
 @art.one_task(
     task_dep=['load_data'],
-    # file_dep=[art.data_path('ppapts')],
-)
-def basic_math():
-    """
-    """
-
-    # use the C.n sub-namespace to record numbers of things, e.g. ppapts
-    C.n.pts = len(D.ppapts)
-
-    # more "detailed" analysis of ppapts
-    C.ppapts.mean.x = D.ppapts['x'].mean()
-
-@art.one_task(
-    task_dep=['load_data', 'basic_math'],
-    file_dep=[art.data_path('ppapts')],
     targets=art.image_path('basic_plot'),
 )
 def basic_plot():
-    """
-    """
 
     x, y = D.ppapts['x'], D.ppapts['y']
     plt.scatter(x, y, lw=0.3, facecolor='none')
     xlim, ylim = plt.xlim(), plt.ylim()
     d = C.ppapts  # convenient shorthand
-    d.slope, d.intercept, d.r_value, d.p_value, d.std_err = scipy.stats.linregress(x, y)
+    tmp = scipy.stats.linregress(x, y)
+    d.slope, d.intercept, d.r_value, d.p_value, d.std_err = tmp
     x0 = x.min() - 500
     y0 = d.intercept + x0 * d.slope
     x1 = x.max() + 500
@@ -96,15 +77,17 @@ def basic_plot():
     plt.scatter(x, y, lw=0.5, facecolor='none', edgecolor='black')
     plt.xlim(xlim)
     plt.ylim(ylim)
-    plt.text(-1200, 600, "$r^2=$%s"%np.round(d.r_value, 2))
+    plt.text(-1200, 600, "$r^2=$%s" % np.round(d.r_value, 2))
 
     for fmt in 'png', 'pdf':
         filepath = art.image_path('basic_plot', fmt)
         plt.savefig(filepath)
+
+
 def main():
     """run task specified from command line"""
     run_task(globals(), sys.argv[1])
 
+
 if __name__ == '__main__':
     art.run_with_context(main)
-
