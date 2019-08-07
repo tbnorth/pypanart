@@ -431,10 +431,13 @@ class PyPanArtState(object):
         seen = [os.path.basename(i) for i in includes]
         includes += [
             i
-            for i in os.listdir(os.path.join(
-                os.path.dirname(__file__), 'template', 'doc-setup'))
+            for i in os.listdir(
+                os.path.join(
+                    os.path.dirname(__file__), 'template', 'doc-setup'
+                )
+            )
             if os.path.splitext(i)[-1].lower() == ext
-               and os.path.basename(i) not in seen
+            and os.path.basename(i) not in seen
         ]
         if fmt in ('tex', 'latex', 'pdf') and not any(
             os.path.basename(i).lower() == 'pypandoc_latex.tex'
@@ -442,6 +445,55 @@ class PyPanArtState(object):
         ):
             includes.append(os.path.join('pypandoc_latex.tex'))
         return includes
+
+    def color_boxes(self, text):
+        """\colorbox{foo} doesn't wrap, and \hl{foo} from usepackage{soul}
+        is only highlighting the first char, so..."""
+        ans = ['']
+        for word in text.split():
+            if len(ans[-1]) < 90:
+                ans[-1] += ' ' + word
+            else:
+                ans.append(word)
+        return '\\\n'.join(
+            "\\colorbox[HTML]{ebc631}{%s}" % i.strip() for i in ans
+        )
+
+    def path_to_image(self, path, fmt):
+        ext_pick = '.pdf' if fmt in ('pdf', 'tex') else '.png'
+        if path.startswith(self.data_dir):  # copy to img folder
+            if not os.path.exists(path):
+                path += ext_pick
+            if not os.path.exists(path):
+                print("NOTE: '%s' does not exist" % path)
+            relpath = os.path.relpath(
+                path, start=self.data_dir
+            )  # remove .data_dir
+            base = "build/html/img/" if fmt == 'html' else "build/tmp/img/"
+            img_path = os.path.join(base, relpath)
+            make_dir(os.path.dirname(img_path))
+            shutil.copyfile(path, img_path)
+            path = os.path.relpath(img_path, start=base)
+        if fmt == 'html':
+            base = "img/"  # relative to .html file
+            check = "build/html/img/"
+        else:
+            base = check = "build/tmp/img/"
+        test = os.path.join(check, path)
+        path = os.path.join(base, path)
+        # ? self.C.path = path
+        if not os.path.exists(test):
+            path += ext_pick
+            test += ext_pick
+        if not os.path.exists(test):
+            print("WARNING: '%s' does not exist" % test)
+
+        return path
+
+    def latex_to_image(self, path, fmt):
+        path = self.path_to_image(path, fmt)
+        name, ext = os.path.splitext(os.path.basename(path))
+        return "fig/" + name.replace('.', '_') + ext
 
     def make_fmt(self, fmt, for_latex=False):
         """make_fmt - make html, pdf, docx, odt, etc. output
@@ -503,56 +555,12 @@ class PyPanArtState(object):
         }
         extra_fmt['tex'] = extra_fmt['pdf']
 
-        def path_to_image(path, fmt):
-            ext_pick = '.pdf' if fmt in ('pdf', 'tex') else '.png'
-            if path.startswith(self.data_dir):  # copy to img folder
-                if not os.path.exists(path):
-                    path += ext_pick
-                if not os.path.exists(path):
-                    print("NOTE: '%s' does not exist" % path)
-                relpath = os.path.relpath(
-                    path, start=self.data_dir
-                )  # remove .data_dir
-                base = "build/html/img/" if fmt == 'html' else "build/tmp/img/"
-                img_path = os.path.join(base, relpath)
-                make_dir(os.path.dirname(img_path))
-                shutil.copyfile(path, img_path)
-                path = os.path.relpath(img_path, start=base)
-            if fmt == 'html':
-                base = "img/"  # relative to .html file
-                check = "build/html/img/"
-            else:
-                base = check = "build/tmp/img/"
-            test = os.path.join(check, path)
-            path = os.path.join(base, path)
-            # ? self.C.path = path
-            if not os.path.exists(test):
-                path += ext_pick
-                test += ext_pick
-            if not os.path.exists(test):
-                print("WARNING: '%s' does not exist" % test)
-
-            return path
-
-        def color_boxes(text):
-            """\colorbox{foo} doesn't wrap, and \hl{foo} from \usepackage{soul}
-            is only highlighting the first char, so..."""
-            ans = ['']
-            for word in text.split():
-                if len(ans[-1]) < 90:
-                    ans[-1] += ' ' + word
-                else:
-                    ans.append(word)
-            return '\\\n'.join(
-                "\\colorbox[HTML]{ebc631}{%s}" % i.strip() for i in ans
-            )
-
         filters = {
-            'img': lambda path, fmt=fmt: path_to_image(path, fmt),
+            'img': lambda path, fmt=fmt: self.path_to_image(path, fmt),
             'code': get_code_filter,
         }
         if fmt in ('pdf', 'tex'):
-            filters['FM'] = color_boxes
+            filters['FM'] = self.color_boxes
         elif fmt == 'html':
             filters['FM'] = (
                 lambda text: "<span style='background: gold'>%s</span>" % text
@@ -596,16 +604,18 @@ class PyPanArtState(object):
                 name, ext = os.path.splitext(os.path.basename(fig['file']))
                 shutil.copyfile(
                     fig['file'],
-                    "%s/number/figure_%04d%s"
-                    % (figures, n + 1, ext),
+                    "%s/number/figure_%04d%s" % (figures, n + 1, ext),
                 )
                 outfile = "%s/name/%s" % (
-                    figures, os.path.basename(fig['file'])
+                    figures,
+                    os.path.basename(fig['file']),
                 )
                 assert not os.path.exists(outfile), outfile
                 shutil.copyfile(fig['file'], outfile)
                 outfile = "%s/latex/%s%s" % (
-                    figures, name.replace('.', '_'), ext
+                    figures,
+                    name.replace('.', '_'),
+                    ext,
                 )
                 assert not os.path.exists(outfile), outfile
                 shutil.copyfile(fig['file'], outfile)
@@ -615,20 +625,15 @@ class PyPanArtState(object):
             # before because we read the source file to find the figures
             # present
             if for_latex:
-                def latex_to_image(path, fmt):
-                    path = path_to_image(path, fmt)
-                    name, ext = os.path.splitext(os.path.basename(path))
-                    return "fig/" + name.replace('.', '_') + ext
-                filters['img'] = lambda path, fmt=fmt: \
-                    latex_to_image(path, fmt)
+                filters['img'] = lambda path, fmt=fmt: self.latex_to_image(
+                    path, fmt
+                )
                 env = self.make_env(here, filters)
                 template = env.get_template('build/tmp/%s.md' % self.basename)
                 with open(source_file, 'w') as out:
                     out.write(
                         template.render(
-                            X=X,
-                            dcb='{{',
-                            open_comment='{!',
+                            X=X, dcb='{{', open_comment='{!'
                         ).encode('utf-8')
                     )
                     out.write('\n')
@@ -651,8 +656,10 @@ class PyPanArtState(object):
 
         filters = "/home/tbrown/.local/lib/python2.7/site-packages"
         if not os.path.exists(filters + "/pandoc_fignos.py"):
-            filters = ("C:/Users/tbrown02/AppData/Roaming/Python/"
-                       "Python27/site-packages")
+            filters = (
+                "C:/Users/tbrown02/AppData/Roaming/Python/"
+                "Python27/site-packages"
+            )
         if not os.path.exists(filters):
             filters = ""
         for filter_ in 'pandoc-fignos', 'pandoc-eqnos', 'pandoc-tablenos':
@@ -710,20 +717,19 @@ class PyPanArtState(object):
         if os.path.exists(outdir):
             shutil.rmtree(outdir)
         os.makedirs(outdir)
-        os.makedirs(outdir+'/fig')
+        os.makedirs(outdir + '/fig')
         if os.path.exists(self.bib):
             shutil.copyfile(
-                self.bib,
-                os.path.join(outdir, os.path.basename(self.bib))
+                self.bib, os.path.join(outdir, os.path.basename(self.bib))
             )
         shutil.copyfile(
             "build/tex/%s.tex" % self.basename,
-            os.path.join(outdir, "%s.tex" % self.basename)
+            os.path.join(outdir, "%s.tex" % self.basename),
         )
         for filename in os.listdir('build/figures/latex'):
             shutil.copyfile(
                 os.path.join('build/figures/latex', filename),
-                os.path.join(outdir+'/fig', filename)
+                os.path.join(outdir + '/fig', filename),
             )
 
         return
