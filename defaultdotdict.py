@@ -32,7 +32,7 @@ class DefaultDotDict(dict):
             raise KeyNotAString(str(item))
         if item not in self:
             self[item] = DefaultDotDict(string_keys=self._string_keys)
-        return self[item].decode('utf-8') if isinstance(self[item], str) else self[item]
+        return self[item]
     def __getitem__(self, item):
         # return the item or an empty DefaultDotDict
         if self._string_keys and not isinstance(item, basestring):
@@ -40,7 +40,7 @@ class DefaultDotDict(dict):
         if item not in self:
             self[item] = DefaultDotDict(string_keys=self._string_keys)
         item = super(DefaultDotDict, self).__getitem__(item)
-        return item.decode('utf-8') if isinstance(item, str) else item
+        return item
 
     def __setattr__(self, key, value):
         if key == '_string_keys':

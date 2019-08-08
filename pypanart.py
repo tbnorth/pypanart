@@ -9,7 +9,7 @@ import json
 import os
 import re
 import shutil
-from StringIO import StringIO
+from io import StringIO
 import sys
 import tempfile
 import time
@@ -186,6 +186,7 @@ class PyPanArtState(object):
         C._metadata.run.time = time.asctime()
         proc = Popen('git rev-parse HEAD'.split(), stdout=PIPE)
         commit, _ = proc.communicate()
+        commit = commit.decode('utf-8')
         proc = Popen('git diff-index HEAD --'.split(), stdout=PIPE)
         mods, _ = proc.communicate()
         mods = '+mods' if mods else ''
@@ -574,9 +575,7 @@ class PyPanArtState(object):
         source_file = 'build/tmp/%s.%s.md' % (self.basename, fmt)
         with open(source_file, 'w') as out:
             out.write(
-                template.render(X=X, dcb='{{', open_comment='{!').encode(
-                    'utf-8'
-                )
+                template.render(X=X, dcb='{{', open_comment='{!')
             )
             out.write('\n')
 
@@ -697,7 +696,7 @@ class PyPanArtState(object):
                             D=self.D,
                             dcb='{{',
                             open_comment='{!',
-                        ).encode('utf-8')
+                        )
                     )
 
         # run pandoc
@@ -858,7 +857,7 @@ class PyPanArtState(object):
                         X=X,
                         dcb='{{dcb}}',
                         open_comment='{{open_comment}}',
-                    ).encode('utf-8')
+                    )
                 )
                 out.write('\n\n')
 
