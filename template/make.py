@@ -10,7 +10,7 @@ art = pypanart.PyPanArtState(
     'pypanart_doc',
     DATA_SOURCES,
     PARTS,
-    bib=["/mnt/edata/edata/tnbbib/tnb.bib", "d:/repo/tnbbib/tnb.bib"],
+    bib=["demo.bib"],
 )
 
 C, D = art.get_C_D()
