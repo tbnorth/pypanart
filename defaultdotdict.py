@@ -19,13 +19,18 @@ try:  # Python 2 / 3 compatible string testing
 except NameError:
     basestring = str
 
-class KeyNotAString(Exception): pass
+
+class KeyNotAString(Exception):
+    pass
+
 
 class DefaultDotDict(dict):
     """Allow a.x as well as a['x'] for dicts"""
+
     def __init__(self, string_keys=False, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
         self._string_keys = string_keys
+
     def __getattr__(self, item):
         # return the item or an empty DefaultDotDict
         if self._string_keys and not isinstance(item, basestring):
@@ -33,6 +38,7 @@ class DefaultDotDict(dict):
         if item not in self:
             self[item] = DefaultDotDict(string_keys=self._string_keys)
         return self[item]
+
     def __getitem__(self, item):
         # return the item or an empty DefaultDotDict
         if self._string_keys and not isinstance(item, basestring):
@@ -61,9 +67,11 @@ class DefaultDotDict(dict):
         """used like json.load, but uses DefaultDotDict.json_object_hook"""
         return json.load(fileobj, object_hook=DefaultDotDict.json_object_hook)
 
+
 def main():
     """simple test / demo of DefaultDotDict"""
-    import os, pprint, tempfile
+    import os, pprint, tempfile  # noqa
+
     a = DefaultDotDict(o=1)
     a.update({'ans': 42})
     a.b[2] = [1, 2]
@@ -87,7 +95,6 @@ def main():
     print(hasattr(new_a, 'test'))  # True
     print('test' in new_a)  # now it's True
 
+
 if __name__ == '__main__':
     main()
-
-
