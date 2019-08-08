@@ -6,6 +6,9 @@ COPY requirements.conda.txt requirements.pip.txt ./
 SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update &&\
+    # repeated fails trying to get python-chardet as a dependency of gcc /
+    # inkscape / git, but it works if done first separately
+    apt-get install -y python-chardet &&\
     apt-get install -y gcc inkscape git &&\
     # gcc needed by pip
     # git and inkscape needed by pypanart
