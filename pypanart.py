@@ -339,9 +339,8 @@ class PyPanArtState(object):
 
             for sources in source_list:
 
-                sources = sources.split(':TYPE:')[
-                    0
-                ]  # used to manage shapefiles, not here
+                sources = sources.split(':TYPE:')[0]
+                # used to manage shapefiles, not here
 
                 # simple eval. of "jinja like" {{expression}} substitutions
                 while '{{' in sources:
@@ -369,6 +368,8 @@ class PyPanArtState(object):
                         }
                 else:
                     sources = glob(os.path.splitext(sources)[0] + '*')
+                    if not sources:
+                        print("WARNING: no source for '%s'" % name)
                     targets = [
                         os.path.join(sub_path, os.path.basename(source))
                         for source in sources
@@ -574,9 +575,7 @@ class PyPanArtState(object):
         X = {'fmt': img_fmt[fmt]}
         source_file = 'build/tmp/%s.%s.md' % (self.basename, fmt)
         with open(source_file, 'w') as out:
-            out.write(
-                template.render(X=X, dcb='{{', open_comment='{!')
-            )
+            out.write(template.render(X=X, dcb='{{', open_comment='{!'))
             out.write('\n')
 
         # copy files from build/html/img to build/tmp/img in case
@@ -827,14 +826,15 @@ class PyPanArtState(object):
             """
             pipe_table - convert CSV table to pandoc pipe_table
 
-            :param str table: CSV table as text
+            :param str table: CSV table as text or list of lists
             :return: pandoc pipe table format
             :rtype: str
             """
-            # convert text to list of lists
-            table = list(csv.reader(StringIO(table.strip())))
+            if isinstance(table, str):
+                # convert text to list of lists
+                table = list(csv.reader(StringIO(table.strip())))
             # convert lists to '|' delimited text
-            text = ['|'.join(i) for i in table]
+            text = ['|'.join(map(str, i)) for i in table]
             # insert header separator line
             text[1:1] = ['|'.join('---' for i in table[0])]
             return '\n'.join(text)
