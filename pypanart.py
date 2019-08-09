@@ -376,7 +376,7 @@ class PyPanArtState(object):
                     ]
                     for source, target in zip(sources, targets):
                         task = {
-                            'name': name + target,
+                            'name': name + ':' + target,
                             'file_dep': [source],
                             'targets': [target],
                             'actions': [

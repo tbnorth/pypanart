@@ -18,8 +18,7 @@ echo python make.py list
 EOT
 
 if [ "$UID" -a "$UID" -ne 0 ]; then
-    su puser -c bash
-else
-    bash
+    su  - puser
 fi
+source ~/.bashrc
 
