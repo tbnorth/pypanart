@@ -769,7 +769,7 @@ class PyPanArtState(object):
         inkscape = 'inkscape'
         if sys.platform == 'win32':
             inkscape = r'"C:\Program Files\Inkscape\inkscape.exe"'
-        out = 0
+        total = 0
         for path, dirs, files in os.walk("./img"):
             dirs[:] = [i for i in dirs if i != 'base']
             for filename in files:
@@ -782,7 +782,7 @@ class PyPanArtState(object):
                         out = os.path.join(
                             out_path, path, filename[:-4] + '.' + format
                         )
-                        out += 1
+                        total += 1
                         yield {
                             'name': "%s from %s" % (format, src),
                             'actions': [
@@ -803,7 +803,7 @@ class PyPanArtState(object):
                 else:
                     src = os.path.join(path, filename)
                     out = os.path.join('build/html', path, filename)
-                    out += 1
+                    total += 1
                     yield {
                         'name': "%s from %s" % (out, src),
                         'actions': [
@@ -813,7 +813,7 @@ class PyPanArtState(object):
                         'file_dep': [src],
                         'targets': [out],
                     }
-        if out == 0:
+        if total == 0:
             yield {
                 'name': "No_images_found_to_process",
                 'actions': ["echo No_images_found_to_process"],
@@ -830,6 +830,10 @@ class PyPanArtState(object):
 
         def img(path):
             return "{{'%s'|img}}" % path
+
+        def hdr_tbl(table):
+            # FIXME: allow user's make.py to inject things like this?
+            return [table.flds] + table.rows
 
         def pipe_table(table):
             """
@@ -850,6 +854,7 @@ class PyPanArtState(object):
 
         env.filters['img'] = img
         env.filters['code'] = get_code_filter
+        env.filters['hdr_tbl'] = hdr_tbl
         env.filters['pipe_table'] = pipe_table
         env.filters['FM'] = lambda text: '{{"%s"|FM}}' % text
 
