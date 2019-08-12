@@ -141,13 +141,14 @@ class PyPanArtState(object):
         )
         self.D.all_inputs = []
         self.D.all_outputs = []
+        self.D.all_tasks = ['collect_data', 'img']
         self.D.DATA = self.data_dir
         # use the first bibliography file found
         bib = self.as_list(bib)
         extant = [i for i in (bib or []) if os.path.exists(i)]
         if extant:
             self.bib = extant[0]
-            # output formats depehd on D.all_outputs, so append to that
+            # output formats depend on D.all_outputs, so append to that
             self.D.all_outputs.append(self.bib)
         else:
             self.bib = bib[0]  # perhaps it will be generated
@@ -734,7 +735,7 @@ class PyPanArtState(object):
 
     def make_formats(self, file_dep=None, task_dep=None):
         file_dep = file_dep or []
-        task_dep = task_dep or []
+        task_dep = self.D.all_tasks + (task_dep or [])
         file_dep += self.D.all_outputs + [
             'parts/%s.md' % i for i in self.parts
         ]
@@ -743,9 +744,9 @@ class PyPanArtState(object):
             'name': 'md',
             'actions': [(self.make_markdown,)],
             'verbosity': 2,
-            'file_dep': file_dep,
+            # 'file_dep': file_dep,
             'task_dep': task_dep,
-            'targets': ['build/tmp/%s.md' % self.basename],
+            # 'targets': ['build/tmp/%s.md' % self.basename],
         }
         file_dep += ['build/tmp/%s.md' % self.basename]
         for fmt in 'html pdf odt docx tex latex'.split():
@@ -768,6 +769,7 @@ class PyPanArtState(object):
         inkscape = 'inkscape'
         if sys.platform == 'win32':
             inkscape = r'"C:\Program Files\Inkscape\inkscape.exe"'
+        out = 0
         for path, dirs, files in os.walk("./img"):
             dirs[:] = [i for i in dirs if i != 'base']
             for filename in files:
@@ -780,6 +782,7 @@ class PyPanArtState(object):
                         out = os.path.join(
                             out_path, path, filename[:-4] + '.' + format
                         )
+                        out += 1
                         yield {
                             'name': "%s from %s" % (format, src),
                             'actions': [
@@ -800,6 +803,7 @@ class PyPanArtState(object):
                 else:
                     src = os.path.join(path, filename)
                     out = os.path.join('build/html', path, filename)
+                    out += 1
                     yield {
                         'name': "%s from %s" % (out, src),
                         'actions': [
@@ -809,6 +813,11 @@ class PyPanArtState(object):
                         'file_dep': [src],
                         'targets': [out],
                     }
+        if out == 0:
+            yield {
+                'name': "No_images_found_to_process",
+                'actions': ["echo No_images_found_to_process"],
+            }
 
     def make_markdown(self):
         """make_markdown - make markdown
@@ -879,6 +888,8 @@ class PyPanArtState(object):
             self.D.all_outputs.extend(kwargs['targets'])
 
         def one_task_maker(function):
+            self.D.all_tasks.append(function.__name__)
+
             def function_task():
                 d = {'actions': [function]}
                 d.update(kwargs)
