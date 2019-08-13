@@ -835,7 +835,7 @@ class PyPanArtState(object):
             # FIXME: allow user's make.py to inject things like this?
             return [table.flds] + table.rows
 
-        def pipe_table(table):
+        def pipe_table(table, align=None):
             """
             pipe_table - convert CSV table to pandoc pipe_table
 
@@ -849,7 +849,20 @@ class PyPanArtState(object):
             # convert lists to '|' delimited text
             text = ['|'.join(map(str, i)) for i in table]
             # insert header separator line
-            text[1:1] = ['|'.join('---' for i in table[0])]
+            aligns = []
+            for i in range(len(table[0])):
+                sep = None
+                if align:
+                    alignc = align[min(len(align)-1, i)].lower()
+                    if alignc == 'l':
+                        sep = ":---"
+                    elif alignc == 'r':
+                        sep = "---:"
+                    elif alignc == 'c':
+                        sep = ":--:"
+                    # intentionally no else:
+                aligns.append(sep or "----")
+            text[1:1] = ['|'.join(aligns)]
             return '\n'.join(text)
 
         env.filters['img'] = img
