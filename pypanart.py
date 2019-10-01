@@ -4,6 +4,7 @@ ImportError: No module named _bsddb
 """
 
 import ast
+import calendar
 import csv
 import json
 import os
@@ -232,6 +233,10 @@ class PyPanArtState(object):
         C.create_doit_tasks = lambda: None
         D.create_doit_tasks = C.create_doit_tasks
 
+        # convenient access to python modules from templates
+        D.time = time
+        D.calendar = calendar
+
         return C, D
 
     def data_path(self, name, item=None):
@@ -294,7 +299,7 @@ class PyPanArtState(object):
             str: path to output file
         """
 
-        template_dict = {'tmplt': open(in_file).read().decode('utf-8')}
+        template_dict = {'tmplt': open(in_file, 'rb').read().decode('utf-8')}
         env = jinja2.Environment(
             loader=jinja2.DictLoader(template_dict), **JINJA_COMMON
         )
@@ -303,7 +308,7 @@ class PyPanArtState(object):
             # suffix required to stop pandoc adding one
             fd, out_file = tempfile.mkstemp(suffix='.template')
             os.close(fd)
-        with open(out_file, 'w') as out:
+        with open(out_file, 'wb') as out:
             out.write(template.render(C=self.C, D=self.D).encode('utf-8'))
         return out_file
 
@@ -400,7 +405,8 @@ class PyPanArtState(object):
                 dtype=None,
                 invalid_raise=False,
                 loose=True,
-            )  # , encoding=None)
+                encoding=None,
+            )
             globals()[name] = self.D[name]
 
         for name in self.data_sources:
@@ -853,7 +859,7 @@ class PyPanArtState(object):
             for i in range(len(table[0])):
                 sep = None
                 if align:
-                    alignc = align[min(len(align)-1, i)].lower()
+                    alignc = align[min(len(align) - 1, i)].lower()
                     if alignc == 'l':
                         sep = ":---"
                     elif alignc == 'r':
