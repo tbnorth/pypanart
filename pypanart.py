@@ -15,6 +15,7 @@ import tempfile
 import time
 import zipfile
 
+from functools import partial
 from glob import glob
 from subprocess import Popen, PIPE
 
@@ -459,6 +460,67 @@ class PyPanArtState(object):
             "\\colorbox[HTML]{ebc631}{%s}" % i.strip() for i in ans
         )
 
+    def cite(self, refs, pre=None, post=None, encl='()', fmt=None, thru=False):
+        """
+        cite - generate a citation that will meet journal's requirements.
+
+        Some journals require using only \cite{} and \citeA{} for example.
+
+        Args:
+            refs (str): comma / semi-colon / space separated ref targets
+            pre (str): pre-amble text, e.g. "see for example"
+            post (str): post-amble text, e.g. "page 42"
+            encl (str): enclose quote in '()', use '' for Brown (1998)
+            fmt (str): target format, supplied by make_fmt()
+            thru (bool): pass through unchanged to second parse pass
+        Returns:
+            str : appropriate citation markup
+        """
+        if thru:
+            return "{{ref(%r,%r,%r,%r)}}" % (refs, pre, post, encl)
+
+        for i in '@,;':
+            refs = refs.replace(i, ' ')
+        refs = refs.split()
+        refs = ','.join(refs)
+        pre = "<%s>" % pre if pre else ''
+        post = "[%s]" % post if post else ''
+        encl0 = ''
+        encl1 = ''
+        if encl == '()':
+            refs = "\\cite%s%s{%s}" % (pre, post, refs)
+        else:
+            if encl:
+                encl0 = encl[0]
+                encl1 = encl[-1]
+            refs = "\\citeA%s%s{%s}" % (pre, post, refs)
+
+        print(refs)
+        return jinja2.Markup(
+            "\n```{=tex}\n%s%s%s\n```\n" % (encl0, refs, encl1)
+        )
+        return jinja2.Markup(refs)
+        # return "``%s``" % refs
+
+    def close_cite(self, path):
+        """Final step in getting pandoc to emit something like
+        \cite<see>[for example]{somRef}
+        remove blank lines surrouding \cite lines from output file.
+
+        **Re-writes file at path***
+        """
+        lines = list(open(path))
+        i = len(lines) - 1
+        while i:
+            if "\\cite" in lines[i][:6]:  # \cite or [\cite
+                if not lines[i+1].strip():
+                    del lines[i+1]
+                if not lines[i-1].strip():
+                    del lines[i-1]
+            i -= 1
+
+        open(path, 'w').write(''.join(lines))
+
     def path_to_image(self, path, fmt):
         ext_pick = '.pdf' if fmt in ('pdf', 'tex') else '.png'
         if path.startswith(self.data_dir):  # copy to img folder
@@ -556,8 +618,9 @@ class PyPanArtState(object):
         extra_fmt['tex'] = extra_fmt['pdf']
 
         filters = {
-            'img': lambda path, fmt=fmt: self.path_to_image(path, fmt),
             'code': get_code_filter,
+            'img': lambda path, fmt=fmt: self.path_to_image(path, fmt),
+            'ref': partial(self.cite, fmt=fmt),
         }
         if fmt in ('pdf', 'tex'):
             filters['FM'] = self.color_boxes
@@ -574,9 +637,12 @@ class PyPanArtState(object):
         source_file = 'build/tmp/%s.%s.md' % (self.basename, fmt)
         with open(source_file, 'w') as out:
             out.write(
-                template.render(X=X, dcb='{{', open_comment='{!').encode(
-                    'utf-8'
-                )
+                template.render(
+                    X=X,
+                    dcb='{{',
+                    open_comment='{!',
+                    ref=partial(self.cite, fmt=fmt),
+                ).encode('utf-8')
             )
             out.write('\n')
 
@@ -633,7 +699,10 @@ class PyPanArtState(object):
                 with open(source_file, 'w') as out:
                     out.write(
                         template.render(
-                            X=X, dcb='{{', open_comment='{!'
+                            X=X,
+                            dcb='{{',
+                            open_comment='{!',
+                            ref=partial(self.cite, fmt=fmt),
                         ).encode('utf-8')
                     )
                     out.write('\n')
@@ -671,7 +740,9 @@ class PyPanArtState(object):
             cmd.append('--filter %s' % filter_)
 
         if for_latex:
+            # cmd.append('--biblatex')
             cmd.append('--natbib')
+            pass
         else:
             cmd.append('--filter pandoc-citeproc')  # after other filters
 
@@ -701,15 +772,18 @@ class PyPanArtState(object):
                     )
 
         # run pandoc
+        output_file = "build/{fmt}/{basename}.{fmt} {source_file}".format(
+            fmt=fmt, basename=self.basename, source_file=source_file
+        )
         cmd.append(
-            "--output build/{fmt}/{basename}.{fmt} {source_file}".format(
-                fmt=fmt, basename=self.basename, source_file=source_file
-            )
+            "--output " + output_file
         )
         print(" \\\n    ".join(cmd))
         cmd = ' '.join(cmd)
         make_dir("build/%s" % fmt)
         Popen(cmd.split()).wait()
+        if for_latex:
+            self.close_cite(output_file)
 
     def make_fmt_latex(self):
         """Move files around for vanilla latex"""
@@ -844,6 +918,7 @@ class PyPanArtState(object):
         env.filters['code'] = get_code_filter
         env.filters['pipe_table'] = pipe_table
         env.filters['FM'] = lambda text: '{{"%s"|FM}}' % text
+        env.filters['ref'] = partial(self.cite, fmt='md', thru=True)
 
         X = {'fmt': '{{X.fmt}}', 'now': time.asctime()}
 
@@ -858,6 +933,7 @@ class PyPanArtState(object):
                         X=X,
                         dcb='{{dcb}}',
                         open_comment='{{open_comment}}',
+                        ref=partial(self.cite, fmt='md', thru=True),
                     ).encode('utf-8')
                 )
                 out.write('\n\n')
