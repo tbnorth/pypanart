@@ -495,12 +495,9 @@ class PyPanArtState(object):
                 encl1 = encl[-1]
             refs = "\\citeA%s%s{%s}" % (pre, post, refs)
 
-        print(refs)
         return jinja2.Markup(
             "\n```{=tex}\n%s%s%s\n```\n" % (encl0, refs, encl1)
         )
-        return jinja2.Markup(refs)
-        # return "``%s``" % refs
 
     def close_cite(self, path):
         """Final step in getting pandoc to emit something like
@@ -513,10 +510,12 @@ class PyPanArtState(object):
         i = len(lines) - 1
         while i:
             if "\\cite" in lines[i][:6]:  # \cite or [\cite
-                if not lines[i+1].strip():
-                    del lines[i+1]
-                if not lines[i-1].strip():
-                    del lines[i-1]
+                if not lines[i + 1].strip():
+                    del lines[i + 1]
+                if not lines[i - 1].strip():
+                    del lines[i - 1]
+                if lines[i + 1][0] in ',.;:':
+                    lines[i] = lines[i].rstrip('\n')
             i -= 1
 
         open(path, 'w').write(''.join(lines))
@@ -621,6 +620,7 @@ class PyPanArtState(object):
             'code': get_code_filter,
             'img': lambda path, fmt=fmt: self.path_to_image(path, fmt),
             'ref': partial(self.cite, fmt=fmt),
+            'refa': partial(self.cite, encl='', fmt=fmt),
         }
         if fmt in ('pdf', 'tex'):
             filters['FM'] = self.color_boxes
@@ -642,6 +642,7 @@ class PyPanArtState(object):
                     dcb='{{',
                     open_comment='{!',
                     ref=partial(self.cite, fmt=fmt),
+                    refa=partial(self.cite, encl='', fmt=fmt),
                 ).encode('utf-8')
             )
             out.write('\n')
@@ -703,6 +704,7 @@ class PyPanArtState(object):
                             dcb='{{',
                             open_comment='{!',
                             ref=partial(self.cite, fmt=fmt),
+                            refa=partial(self.cite, encl='', fmt=fmt),
                         ).encode('utf-8')
                     )
                     out.write('\n')
@@ -772,11 +774,13 @@ class PyPanArtState(object):
                     )
 
         # run pandoc
-        output_file = "build/{fmt}/{basename}.{fmt} {source_file}".format(
-            fmt=fmt, basename=self.basename, source_file=source_file
+        output_file = "build/{fmt}/{basename}.{fmt}".format(
+            fmt=fmt, basename=self.basename
         )
         cmd.append(
-            "--output " + output_file
+            "--output {output_file} {source_file}".format(
+                output_file=output_file, source_file=source_file
+            )
         )
         print(" \\\n    ".join(cmd))
         cmd = ' '.join(cmd)
@@ -919,6 +923,7 @@ class PyPanArtState(object):
         env.filters['pipe_table'] = pipe_table
         env.filters['FM'] = lambda text: '{{"%s"|FM}}' % text
         env.filters['ref'] = partial(self.cite, fmt='md', thru=True)
+        env.filters['refa'] = partial(self.cite, encl='', fmt='md', thru=True)
 
         X = {'fmt': '{{X.fmt}}', 'now': time.asctime()}
 
@@ -934,6 +939,7 @@ class PyPanArtState(object):
                         dcb='{{dcb}}',
                         open_comment='{{open_comment}}',
                         ref=partial(self.cite, fmt='md', thru=True),
+                        refa=partial(self.cite, encl='', fmt='md', thru=True),
                     ).encode('utf-8')
                 )
                 out.write('\n\n')
