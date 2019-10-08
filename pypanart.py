@@ -483,7 +483,7 @@ class PyPanArtState(object):
             refs = refs.replace(i, ' ')
         refs = refs.split()
 
-        if fmt == 'for_latex':
+        if self.D._cfg.cite_fmt == 'cite_A_only':
             refs = ','.join(refs)
             pre = "<%s>" % pre if pre else ''
             post = "[%s]" % post if post else ''
@@ -500,6 +500,7 @@ class PyPanArtState(object):
             return jinja2.Markup(
                 "\n```{=tex}\n%s%s%s\n```\n" % (encl0, refs, encl1)
             )
+
         # reconstruct regular Pandoc citation
         refs = ';'.join('@' + i for i in refs)
         pre = "%s " % pre if pre else ''
