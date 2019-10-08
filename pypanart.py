@@ -482,22 +482,35 @@ class PyPanArtState(object):
         for i in '@,;':
             refs = refs.replace(i, ' ')
         refs = refs.split()
-        refs = ','.join(refs)
-        pre = "<%s>" % pre if pre else ''
-        post = "[%s]" % post if post else ''
+
+        if fmt == 'for_latex':
+            refs = ','.join(refs)
+            pre = "<%s>" % pre if pre else ''
+            post = "[%s]" % post if post else ''
+            encl0 = ''
+            encl1 = ''
+            if encl == '()':
+                refs = "\\cite%s%s{%s}" % (pre, post, refs)
+            else:
+                if encl:
+                    encl0 = encl[0]
+                    encl1 = encl[-1]
+                refs = "\\citeA%s%s{%s}" % (pre, post, refs)
+
+            return jinja2.Markup(
+                "\n```{=tex}\n%s%s%s\n```\n" % (encl0, refs, encl1)
+            )
+        # reconstruct regular Pandoc citation
+        refs = ';'.join('@' + i for i in refs)
+        pre = "%s " % pre if pre else ''
+        post = ", %s" % post if post else ''
         encl0 = ''
         encl1 = ''
         if encl == '()':
-            refs = "\\cite%s%s{%s}" % (pre, post, refs)
-        else:
-            if encl:
-                encl0 = encl[0]
-                encl1 = encl[-1]
-            refs = "\\citeA%s%s{%s}" % (pre, post, refs)
+            encl0 = '['
+            encl1 = ']'
 
-        return jinja2.Markup(
-            "\n```{=tex}\n%s%s%s\n```\n" % (encl0, refs, encl1)
-        )
+        return "%s%s%s%s%s" % (encl0, pre, refs, post, encl1)
 
     def close_cite(self, path):
         """Final step in getting pandoc to emit something like
