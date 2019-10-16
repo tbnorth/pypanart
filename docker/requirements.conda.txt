@@ -1,8 +1,9 @@
-scipy
-pyyaml
-pandoc
-matplotlib
 jinja2
+lxml
+matplotlib
+pandoc
+pyyaml
+scipy
 # rtree
 # pandas
 # numpy

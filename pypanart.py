@@ -198,6 +198,7 @@ class PyPanArtState(object):
         C._metadata.status = 'DRAFT'
 
         if testing:
+            # static values so test outputs don't change
             C._metadata.run.time = "Sun Apr 1 12:34:56 1970"
             C._metadata.run.commit = "testingcommitstring"
             C._metadata.run.commit_short = "testing"
@@ -723,11 +724,12 @@ class PyPanArtState(object):
                     )
                     out.write('\n')
 
-            with open(source_file, 'a') as out:
-                out.write("\n\\newpage\n\n# Figure captions\n\n")
-                for n, fig in enumerate(figs):
-                    out.write("Figure %d: %s\n\n" % (n + 1, fig['caption']))
-                out.write("\n\n\\newpage\n\n")
+            if self.D._cfg.figure_captions:
+                with open(source_file, 'a') as out:
+                    out.write("\n\\newpage\n\n# Figure captions\n\n")
+                    for n, fig in enumerate(figs):
+                        out.write("Figure %d: %s\n\n" % (n + 1, fig['caption']))
+                    out.write("\n\n\\newpage\n\n")
         with open(source_file, 'a') as out:
             out.write("\n\n# References\n\n")
 
