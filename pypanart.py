@@ -438,7 +438,9 @@ class PyPanArtState(object):
                 if os.path.splitext(i)[-1].lower() == ext
             ]
         seen = [os.path.basename(i) for i in includes]
-        includes += [
+        # Include standard includes not included in project specific includes
+        # *first*, so project includes and modify / rely on definitions.
+        includes[0:0] = [
             i
             for i in os.listdir(
                 os.path.join(
