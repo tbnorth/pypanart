@@ -20,8 +20,40 @@
 %% \DeclareSymbolFontAlphabet{\mathnormal}{letters}
 \setmathfont{TeX Gyre DejaVu Math}[version=dejavu]
 % \setmathfont{DejaVu Sans}[version=dejavu]
-\mathversion{dejavu}
+% \mathversion{dejavu}
 \usepackage[italic]{mathastext}
+
+    %% pandoc-tablenos: required package
+    \usepackage{caption}
+
+    %% pandoc-tablenos: environment to disable table caption prefixes
+    \makeatletter
+    \newcounter{tableno}
+    \newenvironment{tablenos:no-prefix-table-caption}{
+      \caption@ifcompatibility{}{
+        \let\oldthetable\thetable
+        \let\oldtheHtable\theHtable
+        \renewcommand{\thetable}{tableno:\thetableno}
+        \renewcommand{\theHtable}{tableno:\thetableno}
+        \stepcounter{tableno}
+        \captionsetup{labelformat=empty}
+      }
+    }{
+      \caption@ifcompatibility{}{
+        \captionsetup{labelformat=default}
+        \let\thetable\oldthetable
+        \let\theHtable\oldtheHtable
+        \addtocounter{table}{-1}
+      }
+    }
+    \makeatother
+
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newenvironment{cslreferences}%
+  {\setlength{\parindent}{0pt}%
+  \everypar{\setlength{\hangindent}{\cslhangindent}}\ignorespaces}%
+  {\par}
 
 %%   \DeclareSymbolFont{numbers}{T1}{DejaVu Sans}{m}{n}
 %%   \SetSymbolFont{numbers}{bold}{T1}{DejaVu Sans}{bx}{n}

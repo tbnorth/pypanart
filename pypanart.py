@@ -641,7 +641,7 @@ class PyPanArtState(object):
                     out.write(
                         template.render(
                             X=X, dcb='{{', open_comment='{!'
-                        ).encode('utf-8')
+                        )  # .encode('utf-8')
                     )
                     out.write('\n')
 
